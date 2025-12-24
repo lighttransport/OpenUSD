@@ -12,11 +12,8 @@ pxr_library(exec
         usd
         vdf
         vt
-        ${TBB_tbb_LIBRARY}
+        TBB::tbb
 
-    INCLUDE_DIRS
-        ${TBB_INCLUDE_DIRS}
-        
     PUBLIC_HEADERS
         api.h
         providerResolution.h
@@ -54,7 +51,9 @@ pxr_library(exec
         compiledOutputCache
         compiler
         compilerTaskSync
+        compilerTaskSyncBase
         computationDefinition
+        constantValueNode
         definitionRegistry
         inputRecompilationTask
         inputResolver

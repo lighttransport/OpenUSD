@@ -106,10 +106,10 @@ pxr_library(hdSt
         primUtils
         ptexTextureObject
         renderBuffer
+        renderBufferPool
         renderDelegate
         renderParam
         renderPass
-        renderPassPruneSceneIndexPlugin
         renderPassShader
         renderPassState
         resourceRegistry
@@ -172,6 +172,8 @@ pxr_library(hdSt
         pipelineDrawBatch
         pointsShaderKey
         quadrangulate
+        renderPassPruneSceneIndexPlugin
+        renderPassVisibilitySceneIndexPlugin
         renderPassShaderKey
         resourceBinder
         shaderKey
@@ -419,16 +421,6 @@ pxr_build_test(testHdStHWFaceCulling
         gf
     CPPFILES
         testenv/testHdStHWFaceCulling.cpp
-)
-pxr_build_test(testHdStIndirectDrawBatchCodeGen
-    LIBRARIES
-        hdSt
-        hd
-        hio
-        glf
-        tf
-    CPPFILES
-        testenv/testHdStIndirectDrawBatchCodeGen.cpp
 )
 pxr_build_test(testHdStIndirectDrawBatchCulling
     LIBRARIES
@@ -2745,13 +2737,6 @@ pxr_register_test(testHdStHWFaceCulling
     DIFF_COMPARE testHdStHWFaceCulling-Run1-stdout.txt
     TESTENV testHdStHWFaceCulling
 )
-pxr_register_test(testHdStIndirectDrawBatchCodeGen
-    COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testHdStIndirectDrawBatchCodeGen"
-    EXPECTED_RETURN_CODE 0
-    ENV
-        HD_ENABLE_GPU_FRUSTUM_CULLING=false
-        HGI_ENABLE_VULKAN=0
-)
 pxr_register_test(testHdStIndirectDrawBatchCulling
     COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testHdStIndirectDrawBatchCulling"
     EXPECTED_RETURN_CODE 0
@@ -2884,13 +2869,6 @@ pxr_register_test(testHdStInstancingUnbalancedNoBindless
         TF_DEBUG=HD_SAFE_MODE
 )
 if (${PXR_ENABLE_MATERIALX_SUPPORT})
-pxr_register_test(testHdStMaterialXShaderGen_SSdefault
-    COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testHdStMaterialXShaderGen --filename standard_surface_default.mtlx"
-    EXPECTED_RETURN_CODE 0
-    STDOUT_REDIRECT shadergen_SSdefault.out
-    DIFF_COMPARE shadergen_SSdefault.out
-    TESTENV testHdStMaterialXShaderGen
-)
 pxr_register_test(testHdStMaterialXShaderGen_UsdPSdefault
     COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testHdStMaterialXShaderGen --filename usd_preview_surface_default.mtlx"
     EXPECTED_RETURN_CODE 0
@@ -2910,6 +2888,13 @@ pxr_register_test(testHdStMaterialXShaderGen_SScopper
     EXPECTED_RETURN_CODE 0
     STDOUT_REDIRECT shadergen_SScopper.out
     DIFF_COMPARE shadergen_SScopper.out
+    TESTENV testHdStMaterialXShaderGen
+)
+pxr_register_test(testHdStMaterialXShaderGen_SSdefault
+    COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testHdStMaterialXShaderGen --filename standard_surface_default.mtlx --config materialTag:customTag"
+    EXPECTED_RETURN_CODE 0
+    STDOUT_REDIRECT shadergen_SSdefault.out
+    DIFF_COMPARE shadergen_SSdefault.out
     TESTENV testHdStMaterialXShaderGen
 )
 pxr_register_test(testHdStMaterialXShaderGen_UsdPStextured

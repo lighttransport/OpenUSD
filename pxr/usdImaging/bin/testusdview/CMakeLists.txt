@@ -239,6 +239,11 @@ pxr_install_test_dir(
 )
 
 pxr_install_test_dir(
+    SRC testenv/testUsdviewInstancingEdits
+    DEST testUsdviewInstancingEdits_SceneIndex_Embree
+)
+
+pxr_install_test_dir(
     SRC testenv/testUsdviewAnimatedBounds
     DEST testUsdviewAnimatedBounds
 )
@@ -301,6 +306,11 @@ pxr_install_test_dir(
 pxr_install_test_dir(
     SRC testenv/testUsdviewSceneLights
     DEST testUsdviewSceneLights_Delegate
+)
+
+pxr_install_test_dir(
+    SRC testenv/testUsdviewSceneMaterials
+    DEST testUsdviewSceneMaterials
 )
 
 pxr_install_test_dir(
@@ -793,6 +803,21 @@ pxr_register_test(testUsdviewSceneLights_Delegate
         USDIMAGINGGL_ENGINE_ENABLE_SCENE_INDEX=0
 )
 
+
+pxr_register_test(testUsdviewSceneMaterials
+    PYTHON
+    COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --testScript testUsdviewSceneMaterials.py test.usda"
+    IMAGE_DIFF_COMPARE
+        enabledSceneMaterials_Storm.png
+        disabledSceneMaterials_Storm.png
+    FAIL 0.05
+    FAIL_PERCENT 0.03
+    PERCEPTUAL
+    EXPECTED_RETURN_CODE 0
+    ENV
+        USDIMAGINGGL_ENGINE_ENABLE_SCENE_INDEX=1
+)
+
 pxr_register_test(testUsdviewLightVisibility
     PYTHON
     COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --testScript testUsdviewLightVisibility.py test.usda"
@@ -1171,6 +1196,8 @@ pxr_register_test(testUsdviewInstancingEdits
     IMAGE_DIFF_COMPARE
         instanceWithParent.png
         instanceWithParentDeactivated.png
+        completeResyncWithNativeInstances1.png
+        completeResyncWithNativeInstances2.png
     FAIL 0.04
     FAIL_PERCENT 0.1
     WARN 0.02
@@ -1186,6 +1213,10 @@ pxr_register_test(testUsdviewInstancingEdits_SceneIndex
     IMAGE_DIFF_COMPARE
         instanceWithParent.png
         instanceWithParentDeactivated.png
+        completeResyncWithNativeInstances1.png
+        completeResyncWithNativeInstances2.png
+        instancerInvisible.png
+        instancerVisible.png
     FAIL 0.04
     FAIL_PERCENT 0.1
     WARN 0.02
@@ -1193,6 +1224,23 @@ pxr_register_test(testUsdviewInstancingEdits_SceneIndex
     ENV
         USDIMAGINGGL_ENGINE_ENABLE_SCENE_INDEX=true
 )
+
+if (EMBREE_FOUND AND ${PXR_BUILD_EMBREE_PLUGIN})
+    pxr_register_test(testUsdviewInstancingEdits_SceneIndex_Embree
+        PYTHON
+        COMMAND "${CMAKE_INSTALL_PREFIX}/bin/testusdview --renderer Embree --testScript testUsdviewInstancingEditsEmbree.py test.usda"
+        EXPECTED_RETURN_CODE 0
+        IMAGE_DIFF_COMPARE
+            instancerInvisibleEmbree.png
+            instancerVisibleEmbree.png
+        FAIL 0.04
+        FAIL_PERCENT 0.1
+        WARN 0.02
+        WARN_PERCENT 0.2
+        ENV
+            USDIMAGINGGL_ENGINE_ENABLE_SCENE_INDEX=true
+    )
+endif()
 
 if(OPENCOLORIO_FOUND AND ${PXR_BUILD_OPENCOLORIO_PLUGIN})
     pxr_register_test(testUsdviewColorManagement

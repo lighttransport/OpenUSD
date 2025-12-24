@@ -80,7 +80,7 @@ pxr_install_test_dir(
 pxr_register_test(testExecUsdBasicCompilation
     COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testExecUsdBasicCompilation"
     EXPECTED_RETURN_CODE 0
-    POST_COMMAND "${PYTHON_EXECUTABLE} normalizeDotFile.py testCompiler.dot testCompiler.out"
+    POST_COMMAND "${PYTHON_EXECUTABLE} normalizeDotFiles.py testCompiler.dot"
     DIFF_COMPARE testCompiler.out
     TESTENV testExecUsdBasicCompilation
 )
@@ -129,6 +129,33 @@ pxr_register_test(testExecUsdConnectionTargetedObjects
     COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testExecUsdConnectionTargetedObjects"
     EXPECTED_RETURN_CODE 0
     TESTENV testExecUsdConnectionTargetedObjects
+)
+
+pxr_build_test(testExecUsdConstantInput
+    LIBRARIES
+        tf
+        esf
+        exec
+        execUsd
+        plug
+        sdf
+        vdf
+        usd
+    CPPFILES
+        testenv/testExecUsdConstantInput.cpp
+)
+
+pxr_install_test_dir(
+    SRC testenv/testExecUsdConstantInput
+    DEST testExecUsdConstantInput
+)
+
+pxr_register_test(testExecUsdConstantInput
+    COMMAND "${CMAKE_INSTALL_PREFIX}/tests/testExecUsdConstantInput"
+    EXPECTED_RETURN_CODE 0
+    POST_COMMAND "${PYTHON_EXECUTABLE} normalizeDotFiles.py testConstantInput.dot"
+    DIFF_COMPARE testConstantInput.out
+    TESTENV testExecUsdConstantInput
 )
 
 pxr_build_test(testExecUsdDispatchedComputations

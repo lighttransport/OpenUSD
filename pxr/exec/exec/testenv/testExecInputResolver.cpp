@@ -36,8 +36,6 @@
 
 PXR_NAMESPACE_USING_DIRECTIVE;
 
-class VdfContext;
-
 TF_DEFINE_PRIVATE_TOKENS(
     _tokens,
 
@@ -212,8 +210,8 @@ public:
         const Exec_InputKey inputKey {
             _tokens->inputName,
             computationName,
-            resultType,
             /* metadataKey */ TfToken(),
+            resultType,
             ExecProviderResolution {
                 localTraversal,
                 dynamicTraversal

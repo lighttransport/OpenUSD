@@ -75,6 +75,13 @@ UsdAttribute::Block() const
     Set(VtValue(SdfValueBlock()), UsdTimeCode::Default()); 
 }
 
+void
+UsdAttribute::BlockAnimation() const
+{
+    Clear();
+    Set(VtValue(SdfAnimationBlock()), UsdTimeCode::Default());
+}
+
 bool
 UsdAttribute::GetTimeSamples(std::vector<double>* times) const 
 {
@@ -238,31 +245,42 @@ UsdAttribute::Set(const char* value, UsdTimeCode time) const {
 
 bool 
 UsdAttribute::Set(const VtValue& value, UsdTimeCode time) const 
-{ 
+{
+    if (value.IsHolding<SdfAnimationBlock>() && 
+        time != UsdTimeCode::Default()) {
+        TF_CODING_ERROR("Cannot set SdfAnimationBlock on <%s> at time %g. "
+                        "Animation blocks can only be set at the default time.",
+                        GetPath().GetText(), time.GetValue());
+        return false;
+    }
     return _GetStage()->_SetValue(time, *this, value);
 }
 
 bool
 UsdAttribute::HasSpline() const
 {
-    return _GetStage()->_HasMetadata(
-        *this,                 // find a field in our attribute spec
-        SdfFieldKeys->Spline,  // find the Spline field
-        TfToken(),             // not a dict field, so no dict key
-        false);                // want authored opinions only
+    UsdResolveInfo resolveInfo = GetResolveInfo();
+    return resolveInfo.GetSource() == UsdResolveInfoSourceSpline;
 }
 
 TsSpline
 UsdAttribute::GetSpline() const
 {
-    TsSpline spline;
-    _GetStage()->_GetMetadata(
-        *this,                 // read a field in our attribute spec
-        SdfFieldKeys->Spline,  // read the Spline field
-        TfToken(),             // not a dict field, so no dict key
-        false,                 // want authored opinions only
-        &spline);              // read into this variable
-    return spline;
+    UsdResolveInfo resolveInfo = GetResolveInfo();
+    if (resolveInfo.GetSource() == UsdResolveInfoSourceSpline) {
+        // Don't return resolveInfo._spline directly because we need
+        // to compute layer offsets
+        TsSpline spline;
+        _GetStage()->_GetMetadata(
+            *this,                 // read a field in our attribute spec
+            SdfFieldKeys->Spline,  // read the Spline field
+            TfToken(),             // not a dict field, so no dict key
+            false,                 // want authored opinions only
+            &spline);              // read into this variable
+        return spline;
+    } else {
+        return TsSpline();
+    }
 }
 
 bool
@@ -395,6 +413,32 @@ UsdAttribute::GetLimits(const TfToken& key) const
     return UsdAttributeLimits(*this, key);
 }
 
+int64_t
+UsdAttribute::GetArraySizeConstraint() const
+{
+    int64_t constraint = 0;
+    GetMetadata(SdfFieldKeys->ArraySizeConstraint, &constraint);
+    return constraint;
+}
+
+bool
+UsdAttribute::SetArraySizeConstraint(int64_t constraint) const
+{
+    return SetMetadata(SdfFieldKeys->ArraySizeConstraint, constraint);
+}
+
+bool
+UsdAttribute::HasAuthoredArraySizeConstraint() const
+{
+    return HasMetadata(SdfFieldKeys->ArraySizeConstraint);
+}
+
+bool 
+UsdAttribute::ClearArraySizeConstraint() const
+{
+    return ClearMetadata(SdfFieldKeys->ArraySizeConstraint);
+}
+
 SdfAttributeSpecHandle
 UsdAttribute::_CreateSpec(const SdfValueTypeName& typeName, bool custom,
                           const SdfVariability &variability) const
@@ -453,10 +497,12 @@ ARCH_PRAGMA_INSTANTIATION_AFTER_SPECIALIZATION
 TF_PP_SEQ_FOR_EACH(_INSTANTIATE_GET, ~, SDF_VALUE_TYPES)
 #undef _INSTANTIATE_GET
 
-// In addition to the Sdf value types, _Set can also be called with an 
-// SdfValueBlock.
+// In addition to the Sdf value types, _Set can also be called with 
+// SdfValueBlock or SdfAnimationBlock.
 template USD_API bool UsdAttribute::_Set(
     const SdfValueBlock &, UsdTimeCode) const;
+template USD_API bool UsdAttribute::_Set(
+    const SdfAnimationBlock &, UsdTimeCode) const;
 
 ARCH_PRAGMA_POP
 

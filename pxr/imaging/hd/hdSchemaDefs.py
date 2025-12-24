@@ -355,6 +355,17 @@
         SCHEMA_TOKEN = 'purpose',
         MEMBERS = [
             ('purpose', T_TOKEN, {}),
+            ('inheritable', T_BOOL,
+             dict(DOC = ('The "inheritable" flag indicates if this purpose '
+             'schema should be inherited by the '
+             'HdFlattenedPurposeDataSourceProvider.'))),
+            ('fallback', T_TOKEN,
+             dict(DOC = ('The "purpose" concept in Hydra is modelled after '+
+             'the UsdGeomImageable concept, which allows prim types to '+
+             'define a purpose fallback value to be used when no '
+             'purpose value is found on a prim or its ancestors.  The '+
+             'Hydra schema transports this fallback, if present, to apply '+
+             'it during flattening.'))),
         ],
         ADD_DEFAULT_LOCATOR = True,
     ),
@@ -637,6 +648,7 @@
         SCHEMA_TOKEN = 'material',
         EXTRA_TOKENS = [
             '(universalRenderContext, "")',
+            '(_universalRenderContextToken, "universalRenderContext")',
             '(all, "__all")',
             'terminals',
             'surface',
@@ -659,12 +671,14 @@
     dict(
         SCHEMA_NAME = 'MaterialOverride',
         DOC = '''
-            The MaterialOverride schema allows overrides to be made to the 
-            material's public UI. Overrides can be applied to both material or 
-            geometry scene index prim locations.
+            The MaterialOverride schema allows overrides to be made to various 
+            parts of materials, such as the public UI or shader nodes' 
+            parameters. Overrides can be applied to material scene index 
+            prim locations.
 
-            The following is an example of a material override. The data
-            source to author an override on the public UI name 
+            The following is an example of a material override affecting a 
+            material's public UI. 
+            The data source to author an override on the public UI name 
             "globalSpecularKface" would look like this:
 
             ds at: materialOverride/interfaceValues/globalSpecularKface/value =
@@ -693,6 +707,21 @@
             ds at: material/<renderContext>/nodes/MaterialLayer/parameters/
                 specularKface/value = 0.666
 
+            The following is an example of a material override affecting a 
+            shader node's input parameter value.
+            The data source to author to an override on the input parameter 
+            called "useClamp" on shader node named "ManipulateColor" would 
+            look like this:
+
+            ds at: materialOverride/parameterValues/ManipulateColor/useClamp/
+                value = 0
+
+            The data source of the node parameter's value will be replaced by 
+            the overriding value data source.
+
+            ds at: material/<renderContext>/nodes/ManipulateColor/parameters/
+                useClamp/value = 0
+
             Note that the MaterialOverride schema does not specify a render 
             context token because material overrides are high-level and do not 
             need to know about implementation details--they just need to specify
@@ -701,6 +730,10 @@
             material nodes and interface mappings--you can imagine that a 
             Renderman vs Storm implementation of a material network would be 
             quite different.    
+
+            In the event where the same parameter has conflicting overrides
+            applied both though interface and parameter values, the overrides
+            set through the interface values will take precedence.
 
             See also the Material schema documentation for ASCII art diagram.
             ''',
@@ -713,6 +746,13 @@
              dict(DOC = '''
                 Maps interface names (ie. public UI names) to overriding
                 data sources that follow the MaterialNodeParameter schema.
+                ''')),
+            ('parameterValues', 'HdNodeToInputToMaterialNodeParameterSchema',
+             dict(DOC = '''
+                Contains names of shader nodes whose parameters values are 
+                overridden. Each parameter within a shader node locator contains
+                overriding data sources that follow the MaterialNodeParameter 
+                schema.
                 ''')),
         ],
     ),
@@ -733,6 +773,7 @@
         SCHEMA_TOKEN = 'materialBindings',
         EXTRA_TOKENS = [
             '(allPurpose, "")',
+            '(_allPurposeToken, "allPurpose")',
         ],
         SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/materialBindingSchema'],
         GENERIC_MEMBER = (
@@ -919,6 +960,18 @@
     ),
 
     #--------------------------------------------------------------------------
+    # builtinMaterial
+    dict(
+        SCHEMA_NAME = "BuiltinMaterial",
+        SCHEMA_TOKEN = "builtinMaterial",
+        ADD_DEFAULT_LOCATOR = True,
+        MEMBERS = [
+            ('ALL_MEMBERS', '', dict(ADD_LOCATOR=True)),
+            ('builtinMaterial', T_BOOL, {}),
+        ],
+    ),
+
+    #--------------------------------------------------------------------------
     # light
     dict(
         SCHEMA_NAME = 'Light',
@@ -982,7 +1035,7 @@
         SCHEMA_INCLUDES = ['{{LIBRARY_PATH}}/schemaTypeDefs'],
         MEMBERS = [
             ('ALL_MEMBERS', '', dict(ADD_LOCATOR = True)),
-            ('namespacedSettings', T_CONTAINER, {}),
+            ('namespacedSettings', 'HdSampledDataSourceContainerSchema', {}),
             ('active', T_BOOL, {}),
             ('renderProducts', 'HdRenderProductVectorSchema', {}),
             ('includedPurposes', T_TOKENARRAY, {}),

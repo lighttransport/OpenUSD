@@ -170,6 +170,9 @@ HdsiRenderPassPruneSceneIndex::_PrimsAdded(
         _UpdateActiveRenderPassState(&extraAddedEntries, &extraRemovedEntries);
     }
 
+    // Mark that we have populated prims.
+    _hasPopulated = true;
+
     // Filter entries against any active render pass prune collection.
     if (!_PruneEntries(_activeRenderPass.pruneEval, entries,
                        &extraAddedEntries)) {
@@ -225,6 +228,7 @@ HdsiRenderPassPruneSceneIndex::_PrimsDirtied(
 
     _SendPrimsAdded(extraAddedEntries);
     _SendPrimsRemoved(extraRemovedEntries);
+    _SendPrimsDirtied(extraDirtyEntries);
 }
 
 HdsiRenderPassPruneSceneIndex::~HdsiRenderPassPruneSceneIndex() = default;
@@ -276,6 +280,10 @@ HdsiRenderPassPruneSceneIndex::_UpdateActiveRenderPassState(
     // should be used here instead, since in the future it will handle
     // instance matches as well as parallel traversal.
     //
+    // We can skip this part if this is the initial round of population.
+    if (!_hasPopulated) {
+        return;
+    }
     for (const SdfPath &path: HdSceneIndexPrimView(_GetInputSceneIndex())) {
         if (priorState.DoesPrune(path)) {
             // The prim had been pruned.

@@ -1745,7 +1745,8 @@ struct CrateFile::_ValueHandler : _ValueHandlerBase
             target = ValueRepForArrayEdit<T>(w.Tell());
             w.Write(valuesRep);
             w.Write(indexesRep);
-            w.Write(arrayEdit.IsDenseArray());
+            w.Write(false); // former 'isDense' field -- array edits no longer
+                            // represent dense arrays.
         }
         return target;
     }
@@ -1767,14 +1768,12 @@ struct CrateFile::_ValueHandler : _ValueHandlerBase
         reader.crate->_UnpackValue(
             reader.template Read<ValueRep>(), &indexesArray);
 
-        *out = VtArrayEditBuilder<T>::CreateFromSerializationData(
-            valuesArray, indexesArray, reader.template Read<bool>());
-
-        if (SafetyOverSpeed) {
-            // Run the edit through the builder's Optimize() function to clear
-            // out any out-of-bounds accesses.
-            *out = VtArrayEditBuilder<T>::Optimize(std::move(*out));
-        }
+        // Discard former 'isDense' field -- array edits no longer represent
+        // dense arrays.
+        reader.template Read<bool>();
+        
+        *out = VtArrayEditBuilder<T>
+            ::CreateFromSerializationData(valuesArray, indexesArray);
     }
 
     ValueRep PackVtValue(_Writer w, VtValue const &v) {
@@ -2876,10 +2875,6 @@ CrateFile::_AddSpec(const SdfPath &path, SdfSpecType type,
             // format instead of having a mix of formats depending on the order 
             // we wrote our payload values in.
             versionUpgradePendingFields.push_back(p);
-        } else if (p.second.IsHolding<TsSpline>()
-            && p.second.UncheckedGet<TsSpline>().IsEmpty()) {
-            // Don't serialize empty splines, because they don't affect
-            // anything.
         } else {
             ordinaryFields.push_back(_AddField(p));
         }

@@ -22,6 +22,7 @@ TF_DEFINE_PUBLIC_TOKENS(SdrPropertyRole, SDR_PROPERTY_ROLE_TOKENS);
 TF_DEFINE_PUBLIC_TOKENS(SdrPropertyTokens, SDR_PROPERTY_TOKENS);
 
 using ShaderMetadataHelpers::GetRoleFromMetadata;
+using ShaderMetadataHelpers::IntVal;
 using ShaderMetadataHelpers::IsTruthy;
 using ShaderMetadataHelpers::StringVal;
 using ShaderMetadataHelpers::TokenVal;
@@ -675,6 +676,8 @@ SdrShaderProperty::SdrShaderProperty(
       _isOutput(isOutput),
       _arraySize(_ConvertSdrPropertyTypeAndArraySize(
                 type, arraySize, metadata).second),
+      _tupleSize(
+          IntVal(SdrPropertyMetadata->TupleSize, metadata, 0)),
       _metadata(metadata),
       _hints(hints),
       _options(options),
@@ -884,8 +887,11 @@ SdrShaderProperty::_ConvertExpressions(
 {
     const TfToken& shownIf = SdrPropertyMetadata->ShownIf;
     if (_metadata.count(shownIf) == 0) {
-        _metadata[shownIf] = ShaderMetadataHelpers::ComputeShownIfFromMetadata(
+        std::string expr = ShaderMetadataHelpers::ComputeShownIfFromMetadata(
             this, properties, shader);
+        if (!expr.empty()) {
+            _metadata[shownIf] = expr;
+        }
     }
 }
 

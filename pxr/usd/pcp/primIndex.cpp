@@ -783,6 +783,7 @@ struct Task {
                 return std::tie(a.node, a.vsetPath, a.vsetNum) >
                     std::tie(b.node, b.vsetPath, b.vsetNum);
             case EvalImpliedClasses:
+            {
                 // When multiple implied classes tasks are queued for different
                 // nodes, ordering matters in that ancestor nodes must be 
                 // processed after their descendants. This minimally guarantees
@@ -802,7 +803,40 @@ struct Task {
                 // minimal (though still complex) case that requires this 
                 // ordering be correct and should be referred to if a detailed
                 // explanation is desired.
-                return b.node > a.node;
+                //
+                // If a.node and b.node are not ancestrally related, a and b
+                // must be evaluated in strength order to ensure that the
+                // strongest implied arcs are added in the case where there
+                // multiple class-based arcs in the prim index that would be
+                // implied to the same site under the same parent node. In that
+                // case we want the implied arc with the strongest origin,
+                // which we get by handling these tasks in strong-to-weak
+                // order. See <test> for an example where this is relevant.
+                //
+                // XXX: See various comments throughout this file about
+                // duplicate node handling and how we might clean this up
+                // in the future.
+                //
+                auto isAncestorAndDescendant = [](PcpNodeRef x, PcpNodeRef y) {
+                    for (; !y.IsRootNode(); y = y.GetParentNode()) {
+                        if (x == y) {
+                            return true;
+                        }
+                    }
+                    return false;
+                };
+
+                if (b.node > a.node
+                    && isAncestorAndDescendant(a.node, b.node)) {
+                    return true;
+                }
+                else if (a.node > b.node
+                    && isAncestorAndDescendant(b.node, a.node)) {
+                    return false;
+                }
+
+                return PcpCompareNodeStrength(a.node, b.node) == 1;
+            }
             default:
                 // Arbitrary order
                 return a.node > b.node;
@@ -3267,7 +3301,25 @@ _AddClassBasedArc(
             // overhead. See also _FindSpecializesToPropagateToRoot.
             if (!indexer->previousFrame && placeholder &&
                 !_IsRelocatesPlaceholderImpliedArc(placeholder)) {
-                return _PropagateNodeToRoot(placeholder, indexer);
+
+                PcpNodeRef propagatedNode = 
+                    _PropagateNodeToRoot(placeholder, indexer);
+
+                // If a new node was created to propagate the placeholder
+                // to the root, tasks will have been enqueued to continue
+                // implying the class to the root of the prim index.
+                //
+                // If a pre-existing node was found instead (i.e., the 
+                // returned node's origin isn't the placeholder), we need
+                // to manually enqueue tasks on the placeholder to continue
+                // that process.
+                if (propagatedNode && 
+                    propagatedNode.GetOriginNode() != placeholder) {
+                    indexer->AddTasksForNode(
+                        placeholder, Task::EvalImpliedClasses);
+                }
+
+                return propagatedNode;
             }
 
             return placeholder;
@@ -4828,44 +4880,16 @@ _NodeCanBeCulled(
     return true;
 }
 
-// Cull all nodes in the subtree rooted at the given node whose site
-// is given in culledSites.
-static bool
-_CullMatchingChildrenInSubtree(
-    PcpNodeRef node,
-    const std::unordered_set<PcpLayerStackSite, TfHash>& culledSites)
-{
-    bool allChildrenCulled = true;
-    TF_FOR_ALL(child, Pcp_GetChildrenRange(node)) {
-        allChildrenCulled &=
-            _CullMatchingChildrenInSubtree(*child, culledSites);
-    }
-
-    if (allChildrenCulled && culledSites.count(node.GetSite())) {
-        node.SetCulled(true);
-    }
-
-    return node.IsCulled();
-}
-
 // Helper that recursively culls subtrees at and under the given node.
 static void
 _CullSubtreesWithNoOpinionsHelper(
     PcpNodeRef node,
     const PcpLayerStackSite& rootSite,
-    std::vector<PcpCulledDependency>* culledDeps,
-    std::unordered_set<PcpLayerStackSite, TfHash>* culledSites = nullptr)
+    std::vector<PcpCulledDependency>* culledDeps)
 {
     // Recurse and attempt to cull all children first. Order doesn't matter.
     TF_FOR_ALL(child, Pcp_GetChildrenRange(node)) {
-        // Skip culling for specializes subtrees here; these will be handled
-        // by _CullSubtreesWithNoOpinions. See comments there for more info.
-        if (PcpIsSpecializeArc(child->GetArcType())) {
-            continue;
-        }
-
-        _CullSubtreesWithNoOpinionsHelper(
-            *child, rootSite, culledDeps, culledSites);
+        _CullSubtreesWithNoOpinionsHelper(*child, rootSite, culledDeps);
     }
 
     // Now, mark this node as culled if we can. These nodes will be
@@ -4878,10 +4902,6 @@ _CullSubtreesWithNoOpinionsHelper(
         // index when Finalize() is called, so they must be saved separately
         // for later use.
         Pcp_AddCulledDependency(node, culledDeps);
-
-        if (culledSites) {
-            culledSites->insert(node.GetSite());
-        }
     }
 }
 
@@ -4891,39 +4911,8 @@ _CullSubtreesWithNoOpinions(
     const PcpLayerStackSite& rootSite,
     std::vector<PcpCulledDependency>* culledDeps)
 {
-    // We propagate and maintain duplicate node structure in the graph
-    // for specializes arcs so when we cull we need to ensure we do so
-    // in both places consistently. 
-    //
-    // The origin subtree is marked inert as part of propagation, which
-    // means culling would remove it entirely which is not what we want.
-    // Instead, we cull whatever nodes we can in the propagated subtree
-    // under the root of the prim index, then cull the corresponding
-    // nodes underneath the origin subtree.
-    //
-    // We do a first pass to handle of all these propagated specializes
-    // nodes first to ensure that nodes in the origin subtrees are marked
-    // culled before other subtrees are processed. Otherwise, subtrees
-    // containing those origin subtrees won't be culled. 
-    //
-    // Note that this first pass must be done in weakest-to-strongest order
-    // to handle hierarchies of specializes arcs. See the test case
-    // test_PrimIndexCulling_SpecializesHierarchy in testPcpPrimIndex for
-    // an example.
-    TF_REVERSE_FOR_ALL(child, Pcp_GetChildrenRange(primIndex->GetRootNode())) {
-        if (Pcp_IsPropagatedSpecializesNode(*child)) {
-            std::unordered_set<PcpLayerStackSite, TfHash> culledSites;
-            _CullSubtreesWithNoOpinionsHelper(
-                *child, rootSite, culledDeps, &culledSites);
-
-            _CullMatchingChildrenInSubtree(child->GetOriginNode(), culledSites);
-        }
-    }
-
     TF_FOR_ALL(child, Pcp_GetChildrenRange(primIndex->GetRootNode())) {
-        if (!Pcp_IsPropagatedSpecializesNode(*child)) {
-            _CullSubtreesWithNoOpinionsHelper(*child, rootSite, culledDeps);
-        }
+        _CullSubtreesWithNoOpinionsHelper(*child, rootSite, culledDeps);
     }
 }    
 

@@ -119,8 +119,14 @@
 // 85 -> 86: Rename Hd[Typed|SchemaBased][Container|Vector]Schema to
 //           Hd[Container|Vector]Of[Schemas|TypedSampledDataSources]Schema.
 // 86 -> 87: Added HdContainerDataSourceEditor::ComputeDirtyLocators.
+// 87 -> 88: Added support for parameterValues data source in 
+//           HdMaterialOverrideSchema and related functions (GetParameterValues,
+//           SetParameterValues). The deprecated method BuildRetained now 
+//           requires a second parameter for the parameterValues data source.
+// 88 -> 89: HdRenderSettingsSchema namespacedSettings is a
+//           HdSampledDataSourceContainerSchema.
 
-#define HD_API_VERSION 87
+#define HD_API_VERSION 89
 
 // 1  ->  2: SimpleLighting -> FallbackLighting
 #define HD_SHADER_API 2
