@@ -1,4 +1,8 @@
 .p4*
 .DS_Store
 .AppleDouble
-
+__pycache__/
+.venv/
+build-reldeb/
+dist-pxr/
+dist-relwithdeb/
