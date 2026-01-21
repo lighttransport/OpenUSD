@@ -4,13 +4,14 @@
 
 set -e
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get script directory (resolve symlinks) and repo root
+SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -P "${SCRIPT_DIR}/.." && pwd)"
 
 # Set paths
 SOURCE_DIR="${SCRIPT_DIR}"
 BUILD_DIR="${SOURCE_DIR}/build-reldeb"
-INSTALL_DIR="${SOURCE_DIR}/../dist-usd-reldeb"
+INSTALL_DIR="${ROOT_DIR}/dist-usd-reldeb"
 
 # Check if build directory exists
 if [ ! -d "${BUILD_DIR}" ]; then

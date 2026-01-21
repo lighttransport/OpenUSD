@@ -8,18 +8,23 @@
 
 set -e
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get script directory (resolve symlinks) and repo root
+SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -P "${SCRIPT_DIR}/.." && pwd)"
 
 # Set paths
 SOURCE_DIR="${SCRIPT_DIR}"
 BUILD_DIR="${SOURCE_DIR}/build-reldeb"
-INSTALL_DIR="${SOURCE_DIR}/../dist-usd-reldeb"
-TBB_ROOT="${SOURCE_DIR}/../dist-tbb-reldeb"
+INSTALL_DIR="${ROOT_DIR}/dist-usd-reldeb"
+TBB_ROOT="${ROOT_DIR}/dist-tbb-reldeb"
 
-# Detect Python from uv installation (not venv)
+# Detect Python from local venv first, then uv installation
 PYTHON3_ROOT_DIR=""
-if command -v uv >/dev/null 2>&1; then
+VENV_DIR="${SOURCE_DIR}/.venv"
+if [ -x "${VENV_DIR}/bin/python3" ] || [ -x "${VENV_DIR}/bin/python" ]; then
+    PYTHON3_ROOT_DIR="${VENV_DIR}"
+    echo "Detected venv Python at ${PYTHON3_ROOT_DIR}"
+elif command -v uv >/dev/null 2>&1; then
     UV_PYTHON_DIR=$(uv python dir 2>/dev/null || true)
     if [ -n "${UV_PYTHON_DIR}" ] && [ -d "${UV_PYTHON_DIR}" ]; then
         # Find the latest installed cpython version
@@ -44,6 +49,14 @@ if [ ! -d "${TBB_ROOT}" ] || [ ! -f "${TBB_ROOT}/include/oneapi/tbb.h" ]; then
     exit 1
 else
     echo "Using existing TBB at ${TBB_ROOT}"
+fi
+
+# Resolve TBB CMake package directory (oneTBB uses tbb, some installs use TBB)
+TBB_CMAKE_DIR=""
+if [ -d "${TBB_ROOT}/lib/cmake/TBB" ]; then
+    TBB_CMAKE_DIR="${TBB_ROOT}/lib/cmake/TBB"
+elif [ -d "${TBB_ROOT}/lib/cmake/tbb" ]; then
+    TBB_CMAKE_DIR="${TBB_ROOT}/lib/cmake/tbb"
 fi
 
 # Create build directory if it doesn't exist
@@ -107,6 +120,11 @@ CMAKE_ARGS=(
     -DPXR_BUILD_EMBREE_PLUGIN=OFF
     -DPXR_ENABLE_VULKAN_SUPPORT=OFF
 )
+
+# Prefer an explicit TBB package directory if we found one.
+if [ -n "${TBB_CMAKE_DIR}" ]; then
+    CMAKE_ARGS+=(-DTBB_DIR="${TBB_CMAKE_DIR}")
+fi
 
 # Add Python3_ROOT_DIR if uv-managed Python was detected
 if [ -n "${PYTHON3_ROOT_DIR}" ]; then

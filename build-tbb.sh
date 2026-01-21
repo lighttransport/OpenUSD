@@ -6,13 +6,14 @@
 
 set -e
 
-# Get script directory
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+# Get script directory (resolve symlinks) and repo root
+SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd -P "${SCRIPT_DIR}/.." && pwd)"
 
 # Set paths
-TBB_INSTALL_DIR="${SCRIPT_DIR}/../dist-tbb-reldeb"
-TBB_SRC_DIR="${SCRIPT_DIR}/../tbb-src"
-TBB_BUILD_DIR="${SCRIPT_DIR}/../tbb-build"
+TBB_INSTALL_DIR="${ROOT_DIR}/dist-tbb-reldeb"
+TBB_SRC_DIR="${ROOT_DIR}/tbb-src"
+TBB_BUILD_DIR="${ROOT_DIR}/tbb-build"
 
 # TBB version and URL
 TBB_VERSION="v2021.12.0"

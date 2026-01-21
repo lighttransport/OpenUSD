@@ -8,6 +8,9 @@
 
 set -e
 
+# Get script directory (resolve symlinks)
+SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+
 # Configuration
 INSTALL_DIR="${1:-/tmp/usd-lte-install}"
 BUILD_TYPE="relwithdebuginfo"
@@ -23,7 +26,7 @@ echo "Custom Namespace: lte"
 echo "========================================="
 
 # Build USD with minimal dependencies
-python build_scripts/build_usd.py \
+python "${SCRIPT_DIR}/build_scripts/build_usd.py" \
     "${INSTALL_DIR}" \
     --build-variant ${BUILD_TYPE} \
     --build-args USD,"-DPXR_SET_EXTERNAL_NAMESPACE=lte -DPXR_ENABLE_PYTHON_SUPPORT=TRUE -DPXR_BUILD_IMAGING=FALSE -DPXR_BUILD_USD_TOOLS=FALSE -DPXR_BUILD_TESTS=FALSE" \
