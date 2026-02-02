@@ -14,6 +14,11 @@ foreach(library ${libraryList})
 endforeach()
 list(JOIN reqLibs ",\n" reqLibs)
 
+# Default Python package name to 'pxr' if not specified
+if(NOT pythonPackageName)
+    set(pythonPackageName "pxr")
+endif()
+
 # Read in template file and generate moduleDeps.cpp
 file(READ "${sourceDir}/cmake/macros/moduleDeps.cpp.in" fileTemplate)
 string(CONFIGURE "${fileTemplate}" fileContents)

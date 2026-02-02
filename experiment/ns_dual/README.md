@@ -1,270 +1,213 @@
 # Dual Namespace USD Experiment
 
-This directory contains code, scripts, and documentation for experimenting with loading both ordinary USD (standard `pxr` namespace) and custom namespace USD (`pxr_lte` namespace with `lte` library prefix) simultaneously.
+This directory contains code, scripts, and documentation for experimenting with loading both ordinary USD (standard `pxr` namespace) and custom namespace USD (`pxr_lte` namespace with `lte_` library prefix) simultaneously.
+
+## Same-Process Dual USD (Windows)
+
+**New!** This experiment now supports same-process dual USD import on Windows. Both `pxr` and `pxr_lte` can be imported in the same Python process without conflicts.
+
+### Quick Start
+
+1. **Build custom namespace USD:**
+   ```batch
+   # From OpenUSD root
+   build-lte-sameproc.bat
+   ```
+
+2. **Test the setup:**
+   ```batch
+   python experiment\ns_dual\pxr_lte_setup.py
+   ```
+
+3. **Use both USDs:**
+   ```python
+   import pxr_lte_setup  # Auto-configures paths
+
+   from pxr import Usd as StandardUsd       # Standard USD (needs separate setup)
+   from pxr_lte import Usd as CustomUsd     # Custom namespace USD
+
+   # They are completely independent
+   std_stage = StandardUsd.Stage.Open("scene.usda")
+   custom_stage = CustomUsd.Stage.CreateInMemory()
+   ```
 
 ## Directory Contents
 
-### Test Scripts
+### Same-Process Files (Windows)
 
-#### `test_dual_usd.py`
-Demonstrates attempting to load both USD builds in the same Python process. Shows:
-- ✅ Ordinary USD imports successfully
-- ✅ Custom USD libraries can be loaded via ctypes
-- ⚠️ Python binding conflicts when trying to import both
-- Analysis of symbols and namespaces
+| File | Description |
+|------|-------------|
+| `pxr_lte_setup.py` | Helper module to configure paths for pxr_lte |
+| `test_dual_usd_sameproc.py` | Comprehensive test for same-process dual USD |
 
-**Usage:**
-```bash
-python3 test_dual_usd.py
-```
+### Subprocess Isolation Files (Cross-platform)
 
-#### `test_isolated_usd.py`
-Demonstrates the **recommended approach**: using subprocess isolation to run both USD builds separately. Shows:
-- ✅ Both USD builds work perfectly in isolation
-- ✅ No conflicts or warnings
-- ✅ Identical output from both builds
-- Creates the `usd_dual.py` wrapper module
+| File | Description |
+|------|-------------|
+| `usd_dual.py` | Wrapper for subprocess-isolated dual USD |
+| `usd_dual_win.py` | Windows-specific subprocess wrapper |
+| `test_isolated_usd.py` | Subprocess isolation test |
+| `example_use_both.py` | Practical usage example |
 
-**Usage:**
-```bash
-python3 test_isolated_usd.py
-```
+### C++ Test Files
 
-#### `example_use_both.py`
-Practical example demonstrating how to use both USD builds to process the same USD operations and verify functional equivalence.
-
-**Usage:**
-```bash
-python3 example_use_both.py
-```
-
-**Output:** Creates a USD stage with geometry primitives using both builds and compares results.
-
-### Library Module
-
-#### `usd_dual.py`
-Wrapper module providing convenient access to both USD builds via subprocess isolation.
-
-**Usage:**
-```python
-from usd_dual import ordinary, custom
-
-# Execute code with ordinary USD
-stdout, stderr, code = ordinary.execute("""
-from pxr import Usd
-stage = Usd.Stage.CreateInMemory()
-print(f"Version: {Usd.GetVersion()}")
-""")
-print(stdout)
-
-# Execute code with custom USD
-stdout, stderr, code = custom.execute("""
-from pxr import Usd
-stage = Usd.Stage.CreateInMemory()
-print(f"Version: {Usd.GetVersion()}")
-""")
-print(stdout)
-```
+| File | Description |
+|------|-------------|
+| `test_usd_single.cpp` | C++ test file for USD builds |
+| `build_cpp_test.bat` | VS2022 build script for C++ tests |
+| `build/` | Build output (gitignored) |
 
 ### Documentation
 
-#### `DUAL_USD_USAGE.md`
-Comprehensive guide covering:
-- Build configurations
-- Namespace isolation details
-- Usage methods and patterns
-- Environment variables
-- Troubleshooting
-- Practical use cases
-- Complete API reference
+| File | Description |
+|------|-------------|
+| `DUAL_USD_USAGE.md` | Comprehensive usage guide |
+| `EXPERIMENT_RESULTS.md` | Detailed findings and analysis |
 
-#### `EXPERIMENT_RESULTS.md`
-Detailed findings from the experiment including:
-- Test results and performance comparisons
-- Symbol analysis
-- Recommended usage patterns
-- Pros/cons of different approaches
-- Conclusions and next steps
+## Build Configuration
 
-### Reference Code
+The custom namespace build uses:
 
-#### `test_cpp_dual_namespace.cpp`
-C++ reference code showing the theoretical approach for using both USD builds in C++. Notes that direct linking is problematic and recommends using separate binaries.
-
-## Quick Start
-
-### 1. Run the Tests
-
-```bash
-# Test basic dual loading (shows conflicts)
-python3 test_dual_usd.py
-
-# Test subprocess isolation (recommended approach)
-python3 test_isolated_usd.py
-
-# Run practical example
-python3 example_use_both.py
+```cmake
+-DPXR_SET_EXTERNAL_NAMESPACE=pxr_lte  # C++ namespace
+-DPXR_LIB_PREFIX=lte_                  # Library prefix (lte_*.dll)
+-DPXR_PYTHON_PACKAGE_NAME=pxr_lte     # Python package name
 ```
 
-### 2. Use in Your Code
+### Build Locations (Windows)
+
+| Build | Path | Libraries |
+|-------|------|-----------|
+| Standard | `dist-pxrusd` | `usd_*.dll` |
+| Custom | `dist-usd-lte` | `lte_*.dll` |
+
+## Two Approaches
+
+### 1. Same-Process (Recommended for Windows)
+
+Both USDs loaded in one Python process. Full interactivity, no serialization overhead.
 
 ```python
-# Import the wrapper
-from usd_dual import ordinary, custom
+# Setup
+import pxr_lte_setup
 
-# Define your USD code
-my_code = """
-from pxr import Usd, UsdGeom
-stage = Usd.Stage.CreateInMemory()
-sphere = UsdGeom.Sphere.Define(stage, "/MySphere")
-print(f"Created: {sphere.GetPath()}")
-"""
+# Import both
+from pxr import Usd as StandardUsd
+from pxr_lte import Usd as CustomUsd
 
-# Run with both builds
-print("Ordinary USD:")
-ordinary.execute(my_code)
-
-print("Custom USD:")
-custom.execute(my_code)
+# Use directly
+std_stage = StandardUsd.Stage.CreateInMemory()
+custom_stage = CustomUsd.Stage.CreateInMemory()
 ```
 
-## Build Locations
+**Pros:**
+- Natural Python usage
+- No serialization overhead
+- Full REPL support
 
-### Ordinary USD
-- **Path**: `/mnt/nvme02/work/usd-lte/dist-pxr`
-- **Namespace**: `pxr` (standard)
-- **Libraries**: `libusd_*.so`
-- **Size**: ~1.5 GB
+**Cons:**
+- Double memory usage
+- Objects not interoperable between builds
+- Requires library prefix changes
 
-### Custom Namespace USD
-- **Path**: `/mnt/nvme02/work/dist-usd-reldeb`
-- **Namespace**: `pxr_lte` (external), `pxrInternal_v0_25_11__pxrReserved__` (internal)
-- **Library Prefix**: `lte`
-- **Libraries**: `lte*.so`
-- **Size**: 2.6 GB
+### 2. Subprocess Isolation (Cross-platform)
 
-## Key Findings Summary
-
-| Aspect | Status | Details |
-|--------|--------|---------|
-| Custom namespace | ✅ Works | `pxr_lte` correctly configured |
-| Library isolation | ✅ Works | Different prefixes prevent conflicts |
-| C++ API | ✅ Works | Use in separate binaries |
-| Python bindings | ⚠️ Conflict | Both use `pxr.*` module names |
-| Subprocess solution | ✅ Works | **Recommended approach** |
-| Functional equivalence | ✅ Verified | Identical USD output |
-| Performance | ✅ Equal | No measurable difference |
-
-## Recommended Usage Pattern
-
-**✅ Best Practice: Subprocess Isolation**
+Each USD runs in a separate process. Useful when builds have library conflicts.
 
 ```python
 from usd_dual import ordinary, custom
 
-# Test with ordinary USD
-ordinary.execute(your_usd_code)
-
-# Test with custom USD
-custom.execute(your_usd_code)
+# Execute code with each build
+ordinary.execute("from pxr import Usd; print(Usd.GetVersion())")
+custom.execute("from pxr import Usd; print(Usd.GetVersion())")
 ```
 
-**Why?**
-- Clean separation
-- No conflicts
-- Full USD functionality
-- Easy to use
+**Pros:**
+- Works with any builds
+- No library conflicts possible
+- Cleaner isolation
 
-## Common Use Cases
+**Cons:**
+- Subprocess overhead
+- Must serialize all communication
+- No interactive debugging
 
-### 1. Compatibility Testing
-Verify that USD files work identically with both builds:
-```python
-test = "from pxr import Usd; stage = Usd.Stage.Open('test.usd')"
-ordinary.execute(test)
-custom.execute(test)
+## Running Tests
+
+### Same-Process Test
+
+```batch
+python test_dual_usd_sameproc.py
 ```
 
-### 2. Regression Testing
-Ensure custom namespace build doesn't introduce bugs:
-```python
-for test_file in test_files:
-    code = f"from pxr import Usd; Usd.Stage.Open('{test_file}')"
-    assert ordinary.execute(code)[2] == 0
-    assert custom.execute(code)[2] == 0
+### Subprocess Test
+
+```batch
+python test_isolated_usd.py
 ```
 
-### 3. Performance Comparison
-Benchmark both builds:
-```python
-benchmark = """
-import time
-from pxr import Usd
-start = time.time()
-for i in range(1000):
-    stage = Usd.Stage.CreateInMemory()
-print(f"Time: {time.time() - start:.3f}s")
-"""
-ordinary.execute(benchmark)
-custom.execute(benchmark)
+### C++ Test
+
+```batch
+build_cpp_test.bat
+cd build
+test_usd_single_pxr.exe
+test_usd_single_lte.exe
 ```
+
+## Key Findings
+
+| Aspect | Same-Process | Subprocess |
+|--------|--------------|------------|
+| Import both | ✅ Works | ✅ Works |
+| No library conflicts | ✅ With lib prefix | ✅ Always |
+| Memory overhead | 2x USD memory | 2 processes |
+| Object passing | ❌ Type mismatch | ❌ Serialization |
+| Debugging | ✅ Full | Limited |
+| Platform | Windows tested | All |
+
+## Environment Variables
+
+| Variable | Description | Default |
+|----------|-------------|---------|
+| `CUSTOM_USD_ROOT` | Custom USD installation | `~/work/dist-usd-lte` |
+| `TBB_ROOT` | TBB installation | `~/work/dist-tbb-reldeb` |
 
 ## Troubleshooting
 
-### "Multiple definitions of TfEnvSetting variable"
-**Cause:** Both USD libraries loaded in same process
-**Solution:** Use subprocess isolation (`usd_dual.py`)
+### "Module not found: pxr_lte"
+- Check PYTHONPATH includes custom USD's `lib/python`
+- Verify `pxr_lte/__init__.py` exists
 
-### Import conflicts
-**Cause:** Both `pxr` modules in sys.path
-**Solution:** Use separate processes
+### DLL load errors (Windows)
+- Use `os.add_dll_directory()` for Python 3.8+
+- Ensure TBB DLLs are accessible
 
-### Wrong USD version loaded
-**Cause:** Environment variable conflicts
-**Solution:** Use `usd_dual.py` which handles paths automatically
+### Type mismatch errors
+Objects from different builds are incompatible:
+```python
+# This fails:
+custom_stage.GetPrimAtPath(standard_prim.GetPath())
 
-## Environment Setup
-
-If you need to manually set up environments:
-
-### For Ordinary USD:
-```bash
-export PYTHONPATH=/mnt/nvme02/work/usd-lte/dist-pxr/lib/python:${PYTHONPATH}
-export LD_LIBRARY_PATH=/mnt/nvme02/work/usd-lte/dist-pxr/lib:${LD_LIBRARY_PATH}
-export PATH=/mnt/nvme02/work/usd-lte/dist-pxr/bin:${PATH}
+# Convert via string:
+path_str = str(standard_prim.GetPath())
+custom_prim = custom_stage.GetPrimAtPath(path_str)
 ```
-
-### For Custom USD:
-```bash
-export PYTHONPATH=/mnt/nvme02/work/dist-usd-reldeb/lib/python:${PYTHONPATH}
-export LD_LIBRARY_PATH=/mnt/nvme02/work/dist-usd-reldeb/lib:${LD_LIBRARY_PATH}
-export PATH=/mnt/nvme02/work/dist-usd-reldeb/bin:${PATH}
-```
-
-**Note:** The `usd_dual.py` wrapper handles this automatically!
 
 ## Further Reading
 
-- `DUAL_USD_USAGE.md` - Complete usage guide
-- `EXPERIMENT_RESULTS.md` - Detailed findings and analysis
-- Parent directory's `BUILD_SUMMARY.md` - Custom USD build details
+- [Dual Namespace Build Guide](../../docs/dual_namespace_build.md)
+- [Using with Prebuilt USD](../../docs/using_with_prebuilt_usd.md)
+- `build-lte-sameproc.bat` - Build script
+- `configure-lte-sameproc.bat` - Configure-only script
 
 ## Contributing
 
-To add more test cases:
-
-1. Create a new test script following the pattern in `test_*.py`
-2. Use `usd_dual.ordinary.execute()` and `usd_dual.custom.execute()`
-3. Compare outputs to verify equivalence
-4. Document findings
+To add tests:
+1. Follow patterns in `test_*.py`
+2. Use appropriate approach (same-process or subprocess)
+3. Document findings
 
 ## License
 
 Same as parent USD project (see LICENSE.txt in repository root).
-
-## Related Build Scripts
-
-Located in parent directory:
-- `build-tbb.sh` - Build TBB dependency
-- `build-lte-configure.sh` - Configure custom USD build
-- `build-lte-build.sh` - Build custom USD

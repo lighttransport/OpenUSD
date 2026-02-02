@@ -405,7 +405,7 @@ function(pxr_library NAME)
             _get_python_module_name(${NAME} pyModuleName)
             add_custom_command(
                 OUTPUT ${moduleDepsFileName}
-                COMMAND ${CMAKE_COMMAND} -DlibraryName=${NAME} -DmoduleName=${pyModuleName} -DsourceDir=${PROJECT_SOURCE_DIR} -Dlibraries="${localLibs}" -Doutfile=${moduleDepsFileName} -P "${PROJECT_SOURCE_DIR}/cmake/macros/genModuleDepsCpp.cmake"
+                COMMAND ${CMAKE_COMMAND} -DlibraryName=${NAME} -DmoduleName=${pyModuleName} -DpythonPackageName=${PXR_PYTHON_PACKAGE_NAME} -DsourceDir=${PROJECT_SOURCE_DIR} -Dlibraries="${localLibs}" -Doutfile=${moduleDepsFileName} -P "${PROJECT_SOURCE_DIR}/cmake/macros/genModuleDepsCpp.cmake"
                 DEPENDS "CMakeLists.txt")
         endif()
     endif()
@@ -473,8 +473,8 @@ function(pxr_setup_python)
     # Join these with a ', '
     string(REPLACE ";" ", " pyModulesStr "${converted}")
 
-    # Install a pxr __init__.py with an appropriate __all__
-    _get_install_dir(lib/python/pxr installPrefix)
+    # Install a ${PXR_PYTHON_PACKAGE_NAME} __init__.py with an appropriate __all__
+    _get_install_dir(lib/python/${PXR_PYTHON_PACKAGE_NAME} installPrefix)
 
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/generated_modules_init.py"
          "__all__ = [${pyModulesStr}]\n")
@@ -1297,15 +1297,15 @@ endfunction() # pxr_tests_prologue
 
 function(pxr_build_python_documentation)
     set(BUILT_XML_DOCS "${PROJECT_BINARY_DIR}/docs/doxy_xml")
-    set(CONVERT_DOXYGEN_TO_PYTHON_DOCS_SCRIPT 
+    set(CONVERT_DOXYGEN_TO_PYTHON_DOCS_SCRIPT
        "${PROJECT_SOURCE_DIR}/docs/python/convertDoxygen.py")
-    set(INSTALL_PYTHON_PXR_ROOT "${CMAKE_INSTALL_PREFIX}/lib/python/pxr")
+    set(INSTALL_PYTHON_PXR_ROOT "${CMAKE_INSTALL_PREFIX}/lib/python/${PXR_PYTHON_PACKAGE_NAME}")
 
     # Get the list of pxr python modules and run a install command for each
     get_property(pxrPythonModules GLOBAL PROPERTY PXR_PYTHON_MODULES)
     # Create string of module names, joined with ","
     string(REPLACE ";" "," pxrPythonModulesStr "${pxrPythonModules}")
-    # Run convertDoxygen on the module list, setting PYTHONPATH 
+    # Run convertDoxygen on the module list, setting PYTHONPATH
     # to the install path for the USD Python modules
     if (WIN32)
         set(DLL_PATH_FLAG "--dllPath \"${CMAKE_INSTALL_PREFIX}/lib;${CMAKE_INSTALL_PREFIX}/bin;${CMAKE_INSTALL_PREFIX}/plugin/usd;${CMAKE_INSTALL_PREFIX}/share/usd/examples/plugin\"")
@@ -1317,7 +1317,7 @@ function(pxr_build_python_documentation)
             WORKING_DIRECTORY ${PROJECT_SOURCE_DIR}/cmake \
             RESULT_VARIABLE convert_doxygen_return_code
             COMMAND ${PYTHON_EXECUTABLE} ${CONVERT_DOXYGEN_TO_PYTHON_DOCS_SCRIPT} \
-                --package pxr --module ${pxrPythonModulesStr} \
+                --package ${PXR_PYTHON_PACKAGE_NAME} --module ${pxrPythonModulesStr} \
                 --inputIndex ${BUILT_XML_DOCS}/index.xml \
                 --pythonPath ${CMAKE_INSTALL_PREFIX}/lib/python \
                 ${DLL_PATH_FLAG} \
