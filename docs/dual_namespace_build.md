@@ -338,6 +338,49 @@ If you see crashes or strange behavior:
 - Verify namespace configuration is correct
 - Check for any shared global state
 
+## Verified Test Results
+
+The following configurations have been tested and verified to work on Windows with Python 3.11:
+
+### Test Environment
+
+- OS: Windows 11
+- Python: 3.11.14 (via uv)
+- TBB: Pre-built release
+- Standard USD: pip `usd-core` 25.11
+
+### Test Results
+
+| Build | USD Version | Standalone Import | Dual Import with pip `pxr` |
+|-------|-------------|-------------------|---------------------------|
+| dev branch (`pxr_lte`) | 0.25.11 | ✅ PASSED | ✅ PASSED |
+| v24.11 branch (`pxr_lte`) | 0.24.11 | ✅ PASSED | ✅ PASSED |
+
+### Same-Process Dual Import Verification
+
+```python
+# Both imports work in the same Python process
+from pxr import Usd as PxrUsd        # pip usd-core (0.25.11)
+from pxr_lte import Usd as LteUsd    # custom build (0.24.11 or 0.25.11)
+
+# Types are correctly different, confirming namespace separation
+pxr_stage = PxrUsd.Stage.CreateInMemory()    # type: pxr.Usd.Stage
+lte_stage = LteUsd.Stage.CreateInMemory()    # type: pxr_lte.Usd.Stage
+
+# Stages are independent
+assert type(pxr_stage) != type(lte_stage)  # True
+```
+
+### Tested Modules
+
+The following modules have been verified to import and function correctly in dual-import scenarios:
+
+- `Usd` - Stage creation and prim manipulation
+- `Sdf` - Layer creation
+- `Tf` - Foundation utilities
+- `Gf` - Graphics math (Vec3f, etc.)
+- `Vt` - Value types (arrays)
+
 ## See Also
 
 - `build-lte-sameproc.bat` - Windows build script
