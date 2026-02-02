@@ -168,7 +168,7 @@ function(_plugInfo_subst libTarget pluginToLibraryPath plugInfoPath destFile)
 endfunction() # _plugInfo_subst
 
 # Install compiled python files alongside the python object,
-# e.g. lib/python/pxr/Ar/__init__.pyc
+# e.g. lib/python/pxr/Ar/__init__.pyc (or lib/python/${PXR_PYTHON_PACKAGE_NAME}/Ar/__init__.pyc)
 function(_install_python LIBRARY_NAME)
     set(options  "")
     set(oneValueArgs "")
@@ -187,7 +187,7 @@ function(_install_python LIBRARY_NAME)
     foreach(file ${ip_FILES})
         set(filesToInstall "")
         set(installDest
-            "${libPythonPrefix}/pxr/${LIBRARY_INSTALLNAME}")
+            "${libPythonPrefix}/${PXR_PYTHON_PACKAGE_NAME}/${LIBRARY_INSTALLNAME}")
 
         # Only attempt to compile .py files. Files like plugInfo.json may also
         # be in this list
@@ -204,17 +204,39 @@ function(_install_python LIBRARY_NAME)
                 set(installDest ${installDest}/${dir})
             endif()
 
+            # When using a custom Python package name, we need to modify the
+            # Python source files to use the correct import path. Copy the
+            # source file to the build directory and replace 'from pxr import'
+            # with 'from ${PXR_PYTHON_PACKAGE_NAME} import'.
+            set(pySourceFile ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+            if (NOT "${PXR_PYTHON_PACKAGE_NAME}" STREQUAL "pxr")
+                set(modifiedPyFile ${CMAKE_CURRENT_BINARY_DIR}/${file})
+                file(MAKE_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
+                add_custom_command(
+                    OUTPUT ${modifiedPyFile}
+                    COMMAND ${PYTHON_EXECUTABLE} -c
+                        "import sys; content=open(sys.argv[1],'r').read(); content=content.replace('from pxr import','from ${PXR_PYTHON_PACKAGE_NAME} import'); open(sys.argv[2],'w').write(content)"
+                        ${CMAKE_CURRENT_SOURCE_DIR}/${file}
+                        ${modifiedPyFile}
+                    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${file}
+                    COMMENT "Patching ${file} for custom package name"
+                )
+                set(pySourceFile ${modifiedPyFile})
+                list(APPEND files_copied ${modifiedPyFile})
+            endif()
+
             set(outfile ${CMAKE_CURRENT_BINARY_DIR}/${file_we}.pyc)
             list(APPEND files_copied ${outfile})
             add_custom_command(OUTPUT ${outfile}
                 COMMAND
                     ${PYTHON_EXECUTABLE}
                     ${PROJECT_SOURCE_DIR}/cmake/macros/compilePython.py
-                    ${CMAKE_CURRENT_SOURCE_DIR}/${file}
-                    ${CMAKE_CURRENT_SOURCE_DIR}/${file}
+                    ${pySourceFile}
+                    ${pySourceFile}
                     ${CMAKE_CURRENT_BINARY_DIR}/${file_we}.pyc
+                DEPENDS ${pySourceFile}
             )
-            list(APPEND filesToInstall ${CMAKE_CURRENT_SOURCE_DIR}/${file})
+            list(APPEND filesToInstall ${pySourceFile})
             list(APPEND filesToInstall ${CMAKE_CURRENT_BINARY_DIR}/${file_we}.pyc)
         elseif (${file} MATCHES ".qss$")
             # XXX -- Allow anything or allow nothing?
@@ -223,10 +245,11 @@ function(_install_python LIBRARY_NAME)
             message(FATAL_ERROR "Cannot have non-Python file ${file} in PYTHON_FILES.")
         endif()
 
-        # Note that we always install under lib/python/pxr, even if we are in
-        # the third_party project. This means the import will always look like
-        # 'from pxr import X'. We need to do this per-loop iteration because
-        # the installDest may be different due to the presence of subdirs.
+        # Note that we always install under lib/python/${PXR_PYTHON_PACKAGE_NAME},
+        # even if we are in the third_party project. This means the import will
+        # always look like 'from ${PXR_PYTHON_PACKAGE_NAME} import X'. We need to
+        # do this per-loop iteration because the installDest may be different
+        # due to the presence of subdirs.
         install(
             FILES
                 ${filesToInstall}
@@ -398,7 +421,7 @@ function(_install_pyside_ui_files LIBRARY_NAME)
 
     install(
         FILES ${uiFiles}
-        DESTINATION "${libPythonPrefix}/pxr/${LIBRARY_INSTALLNAME}"
+        DESTINATION "${libPythonPrefix}/${PXR_PYTHON_PACKAGE_NAME}/${LIBRARY_INSTALLNAME}"
     )
 endfunction() # _install_pyside_ui_files
 
@@ -1016,12 +1039,12 @@ function(_pxr_python_module NAME)
         APPEND PROPERTY PXR_PYTHON_MODULES ${pyModuleName}
     )
 
-    # Always install under the 'pxr' module, rather than base on the
-    # project name. This makes importing consistent, e.g.
-    # 'from pxr import X'. Additionally, python libraries always install
-    # into the default lib install, not into the third_party subdirectory
-    # or similar.
-    set(libInstallPrefix "lib/python/pxr/${pyModuleName}")
+    # Always install under the configured Python package module (default 'pxr'),
+    # rather than based on the project name. This makes importing consistent, e.g.
+    # 'from pxr import X' (or 'from pxr_lte import X' if PXR_PYTHON_PACKAGE_NAME
+    # is set). Additionally, python libraries always install into the default
+    # lib install, not into the third_party subdirectory or similar.
+    set(libInstallPrefix "lib/python/${PXR_PYTHON_PACKAGE_NAME}/${pyModuleName}")
 
     # Python modules need to be able to access their corresponding
     # wrapped library and the install lib directory.

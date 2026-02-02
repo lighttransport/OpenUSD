@@ -261,7 +261,33 @@ function(pxr_library NAME)
             set(libraryRequiresPython 1)
         endif()
         if(args_PYTHON_CPPFILES)
-            list(APPEND args_CPPFILES ${args_PYTHON_CPPFILES})
+            # If using a custom Python package name, patch moduleDeps.cpp to use
+            # the correct module registration path (e.g., pxr_lte.Tf instead of pxr.Tf)
+            if(NOT "${PXR_PYTHON_PACKAGE_NAME}" STREQUAL "pxr")
+                foreach(cppfile ${args_PYTHON_CPPFILES})
+                    get_filename_component(filename ${cppfile} NAME)
+                    if("${filename}" STREQUAL "moduleDeps.cpp")
+                        # Generate a patched moduleDeps.cpp in the build directory
+                        set(patchedFile "${CMAKE_CURRENT_BINARY_DIR}/moduleDeps_patched.cpp")
+                        add_custom_command(
+                            OUTPUT ${patchedFile}
+                            COMMAND ${PYTHON_EXECUTABLE}
+                                ${CMAKE_SOURCE_DIR}/cmake/macros/patchModuleDeps.py
+                                ${CMAKE_CURRENT_SOURCE_DIR}/${cppfile}
+                                ${patchedFile}
+                                ${PXR_PYTHON_PACKAGE_NAME}
+                            DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${cppfile}
+                                    ${CMAKE_SOURCE_DIR}/cmake/macros/patchModuleDeps.py
+                            COMMENT "Patching ${cppfile} for custom package name (${NAME})"
+                        )
+                        list(APPEND args_CPPFILES ${patchedFile})
+                    else()
+                        list(APPEND args_CPPFILES ${cppfile})
+                    endif()
+                endforeach()
+            else()
+                list(APPEND args_CPPFILES ${args_PYTHON_CPPFILES})
+            endif()
             set(libraryRequiresPython 1)
         endif()
 
@@ -430,12 +456,39 @@ function(pxr_library NAME)
     if(PXR_ENABLE_PYTHON_SUPPORT AND (args_PYMODULE_CPPFILES OR args_PYMODULE_FILES OR args_PYSIDE_UI_FILES))
         list(APPEND pythonModuleIncludeDirs ${PYTHON_INCLUDE_DIRS})
 
+        # If using a custom Python package name, patch moduleDeps.cpp to use
+        # the correct module registration path (e.g., pxr_lte.Tf instead of pxr.Tf)
+        set(patchedPymoduleCppfiles ${args_PYMODULE_CPPFILES})
+        if(NOT "${PXR_PYTHON_PACKAGE_NAME}" STREQUAL "pxr")
+            set(patchedPymoduleCppfiles "")
+            foreach(cppfile ${args_PYMODULE_CPPFILES})
+                get_filename_component(filename ${cppfile} NAME)
+                if("${filename}" STREQUAL "moduleDeps.cpp")
+                    # Generate a patched moduleDeps.cpp in the build directory
+                    set(patchedFile "${CMAKE_CURRENT_BINARY_DIR}/moduleDeps_patched.cpp")
+                    _get_python_module_name(${NAME} pyModuleName)
+                    add_custom_command(
+                        OUTPUT ${patchedFile}
+                        COMMAND ${PYTHON_EXECUTABLE} -c
+                            "import sys; content=open(sys.argv[1],'r').read(); content=content.replace('TfToken(\\\"pxr.','TfToken(\\\"${PXR_PYTHON_PACKAGE_NAME}.'); open(sys.argv[2],'w').write(content)"
+                            ${CMAKE_CURRENT_SOURCE_DIR}/${cppfile}
+                            ${patchedFile}
+                        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/${cppfile}
+                        COMMENT "Patching ${cppfile} for custom package name"
+                    )
+                    list(APPEND patchedPymoduleCppfiles ${patchedFile})
+                else()
+                    list(APPEND patchedPymoduleCppfiles ${cppfile})
+                endif()
+            endforeach()
+        endif()
+
         _pxr_python_module(
             ${NAME}
             WRAPPED_LIB_INSTALL_PREFIX "${libInstallPrefix}"
             PYTHON_FILES ${args_PYMODULE_FILES}
             PYSIDE_UI_FILES ${args_PYSIDE_UI_FILES}
-            CPPFILES ${args_PYMODULE_CPPFILES}
+            CPPFILES ${patchedPymoduleCppfiles}
             INCLUDE_DIRS "${args_INCLUDE_DIRS};${pythonModuleIncludeDirs}"
             PRECOMPILED_HEADERS ${pch}
             PRECOMPILED_HEADER_NAME ${args_PRECOMPILED_HEADER_NAME}
@@ -473,8 +526,8 @@ function(pxr_setup_python)
     # Join these with a ', '
     string(REPLACE ";" ", " pyModulesStr "${converted}")
 
-    # Install a pxr __init__.py with an appropriate __all__
-    _get_install_dir(lib/python/pxr installPrefix)
+    # Install a ${PXR_PYTHON_PACKAGE_NAME} __init__.py with an appropriate __all__
+    _get_install_dir(lib/python/${PXR_PYTHON_PACKAGE_NAME} installPrefix)
 
     file(WRITE "${CMAKE_CURRENT_BINARY_DIR}/generated_modules_init.py"
          "__all__ = [${pyModulesStr}]\n")
@@ -1340,9 +1393,9 @@ endfunction() # pxr_tests_prologue
 
 function(pxr_build_python_documentation)
     set(BUILT_XML_DOCS "${PROJECT_BINARY_DIR}/docs/doxy_xml")
-    set(CONVERT_DOXYGEN_TO_PYTHON_DOCS_SCRIPT 
+    set(CONVERT_DOXYGEN_TO_PYTHON_DOCS_SCRIPT
        "${PROJECT_SOURCE_DIR}/docs/python/convertDoxygen.py")
-    set(INSTALL_PYTHON_PXR_ROOT "${CMAKE_INSTALL_PREFIX}/lib/python/pxr")
+    set(INSTALL_PYTHON_PXR_ROOT "${CMAKE_INSTALL_PREFIX}/lib/python/${PXR_PYTHON_PACKAGE_NAME}")
 
     # Get the list of pxr python modules and run a install command for each
     get_property(pxrPythonModules GLOBAL PROPERTY PXR_PYTHON_MODULES)

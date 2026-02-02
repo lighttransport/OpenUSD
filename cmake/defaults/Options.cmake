@@ -153,6 +153,17 @@ set(PXR_LIB_PREFIX ""
     "${helpstr}"
 )
 
+string(CONCAT helpstr
+    "Name of the Python package directory. If unspecified, defaults to 'pxr'. "
+    "Set to a different value (e.g., 'pxr_lte') to enable side-by-side "
+    "installation with another USD build using a different package name."
+)
+set(PXR_PYTHON_PACKAGE_NAME "pxr"
+    CACHE
+    STRING
+    "${helpstr}"
+)
+
 option(BUILD_SHARED_LIBS "Build shared libraries." ON)
 option(PXR_BUILD_MONOLITHIC "Build a monolithic library." OFF)
 set(PXR_MONOLITHIC_IMPORT ""
