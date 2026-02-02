@@ -12,16 +12,17 @@ By default, OpenUSD uses the `pxr` namespace for C++ and Python. When you need t
 - Using USD from a DCC application while also using a custom USD build
 - Testing USD changes without affecting the system USD installation
 - Running two different USD versions side-by-side for comparison
+- Using pip-installed USD (`pxr`) alongside a custom-built USD (`pxr_lte`)
 
 ## Configuration Options
 
 OpenUSD provides several CMake options for namespace customization:
 
-| Option | Description | Default |
-|--------|-------------|---------|
-| `PXR_SET_EXTERNAL_NAMESPACE` | C++ namespace name | `pxr` |
-| `PXR_LIB_PREFIX` | Library file prefix | `usd_` |
-| `PXR_PYTHON_PACKAGE_NAME` | Python package name | `pxr` |
+| Option | Description | Default | Example |
+|--------|-------------|---------|---------|
+| `PXR_SET_EXTERNAL_NAMESPACE` | C++ namespace name | `pxr` | `pxr_lte` |
+| `PXR_LIB_PREFIX` | Library file prefix | `usd_` | `lte_` |
+| `PXR_PYTHON_PACKAGE_NAME` | Python package name | `pxr` | `pxr_lte` |
 
 ### Example Configuration
 
@@ -39,7 +40,7 @@ from pxr import Usd as StandardUsd      # Standard USD
 from pxr_lte import Usd as CustomUsd    # Custom build
 ```
 
-## Build Instructions
+## Build Procedure
 
 ### Prerequisites
 
@@ -50,26 +51,38 @@ from pxr_lte import Usd as CustomUsd    # Custom build
 
 ### Windows Build
 
+#### Using the Batch Script
+
 Use the provided batch script:
 
 ```batch
 build-lte-sameproc.bat
 ```
 
-Or configure manually:
+#### Manual CMake Configuration
 
 ```batch
-cmake -G "Visual Studio 17 2022" -A x64 ^
+mkdir build-lte
+cd build-lte
+
+cmake .. ^
+    -G "Visual Studio 17 2022" ^
+    -A x64 ^
     -DCMAKE_BUILD_TYPE=RelWithDebInfo ^
-    -DCMAKE_INSTALL_PREFIX="C:/path/to/install" ^
+    -DCMAKE_INSTALL_PREFIX=C:/path/to/dist-usd-lte ^
     -DPXR_ENABLE_PYTHON_SUPPORT=ON ^
     -DPXR_ENABLE_NAMESPACES=ON ^
     -DPXR_SET_EXTERNAL_NAMESPACE=pxr_lte ^
     -DPXR_LIB_PREFIX=lte_ ^
     -DPXR_PYTHON_PACKAGE_NAME=pxr_lte ^
     -DPXR_BUILD_IMAGING=OFF ^
+    -DPXR_BUILD_USD_IMAGING=OFF ^
+    -DPXR_BUILD_USDVIEW=OFF ^
     -DPXR_BUILD_TESTS=OFF ^
-    -DTBB_ROOT_DIR="C:/path/to/tbb" ^
+    -DPXR_BUILD_EXAMPLES=OFF ^
+    -DPXR_BUILD_TUTORIALS=OFF ^
+    -DPXR_ENABLE_MATERIALX_SUPPORT=OFF ^
+    -DTBB_ROOT_DIR=C:/path/to/tbb ^
     path/to/OpenUSD/source
 
 cmake --build . --config RelWithDebInfo --parallel
@@ -79,15 +92,24 @@ cmake --build . --config RelWithDebInfo --target install
 ### Linux/macOS Build
 
 ```bash
-cmake -DCMAKE_BUILD_TYPE=RelWithDebInfo \
-    -DCMAKE_INSTALL_PREFIX=/path/to/install \
+mkdir build-lte
+cd build-lte
+
+cmake \
+    -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+    -DCMAKE_INSTALL_PREFIX=/path/to/dist-usd-lte \
     -DPXR_ENABLE_PYTHON_SUPPORT=ON \
     -DPXR_ENABLE_NAMESPACES=ON \
     -DPXR_SET_EXTERNAL_NAMESPACE=pxr_lte \
     -DPXR_LIB_PREFIX=lte_ \
     -DPXR_PYTHON_PACKAGE_NAME=pxr_lte \
     -DPXR_BUILD_IMAGING=OFF \
+    -DPXR_BUILD_USD_IMAGING=OFF \
+    -DPXR_BUILD_USDVIEW=OFF \
     -DPXR_BUILD_TESTS=OFF \
+    -DPXR_BUILD_EXAMPLES=OFF \
+    -DPXR_BUILD_TUTORIALS=OFF \
+    -DPXR_ENABLE_MATERIALX_SUPPORT=OFF \
     path/to/OpenUSD/source
 
 cmake --build . --parallel $(nproc)
@@ -127,26 +149,55 @@ After installation, you'll have:
 
 ## Usage
 
-### Python Usage
+### Python Import (Windows)
 
 ```python
 import sys
 import os
 
-# Add DLL search paths (Windows)
-os.add_dll_directory("C:/path/to/custom-usd/lib")
-os.add_dll_directory("C:/path/to/tbb/bin")
+# Add DLL directories (Windows Python 3.8+)
+# IMPORTANT: Add both lib and bin directories
+os.add_dll_directory(r'C:\path\to\dist-usd-lte\lib')
+os.add_dll_directory(r'C:\path\to\dist-usd-lte\bin')
+os.add_dll_directory(r'C:\path\to\tbb\bin')
 
 # Add Python path
-sys.path.insert(0, "C:/path/to/custom-usd/lib/python")
+sys.path.insert(0, r'C:\path\to\dist-usd-lte\lib\python')
+
+# Import custom namespace USD
+from pxr_lte import Usd, Sdf, Tf
+
+# Check version
+print('USD version:', Usd.GetVersion())
+```
+
+### Same-Process Dual USD
+
+You can import both standard USD and custom namespace USD in the same Python process:
+
+```python
+import sys
+import os
+
+# Setup DLL paths for custom build (Windows)
+os.add_dll_directory(r'C:\path\to\dist-usd-lte\lib')
+os.add_dll_directory(r'C:\path\to\dist-usd-lte\bin')
+os.add_dll_directory(r'C:\path\to\tbb\bin')
+
+# Add Python path for custom build
+sys.path.insert(0, r'C:\path\to\dist-usd-lte\lib\python')
 
 # Import both USD builds
-from pxr import Usd as StandardUsd      # Standard/preinstalled USD
-from pxr_lte import Usd as CustomUsd    # Custom namespace build
+from pxr import Usd as PxrUsd      # Standard/pip-installed USD
+from pxr_lte import Usd as LteUsd  # Custom namespace USD
+
+# Verify versions
+print('pxr version:', PxrUsd.GetVersion())
+print('pxr_lte version:', LteUsd.GetVersion())
 
 # Use them independently
-std_stage = StandardUsd.Stage.Open("scene.usda")
-custom_stage = CustomUsd.Stage.CreateNew("output.usda")
+std_stage = PxrUsd.Stage.Open("scene.usda")
+custom_stage = LteUsd.Stage.CreateNew("output.usda")
 ```
 
 ### C++ Usage
@@ -183,15 +234,43 @@ void example() {
    - Import statements in `__init__.py` files
    - Module registration in C++ `moduleDeps.cpp` files
 
-### Modified Files
+### What Gets Patched During Build
+
+1. **Python source files** (`__init__.py`, etc.):
+   - `from pxr import` → `from pxr_lte import`
+
+2. **C++ moduleDeps.cpp files**:
+   - `TfToken("pxr.Tf")` → `TfToken("pxr_lte.Tf")`
+   - This ensures `TfScriptModuleLoader` registers modules with the correct package name
+
+### Why moduleDeps.cpp Patching is Needed
+
+The `moduleDeps.cpp` files contain Python module registration that uses the package name:
+
+```cpp
+TfScriptModuleLoader::GetInstance().
+    RegisterLibrary(TfToken("tf"), TfToken("pxr.Tf"), reqs);
+```
+
+Without patching, importing `pxr_lte.Usd` would fail because the loader would look for `pxr.Tf` instead of `pxr_lte.Tf`.
+
+### Modified Files (dev branch)
 
 The following CMake files were modified to support custom Python package names:
 
 - `cmake/defaults/Options.cmake` - Added `PXR_PYTHON_PACKAGE_NAME` option
 - `cmake/macros/Private.cmake` - Updated Python file installation paths and added source patching
 - `cmake/macros/Public.cmake` - Updated Python package installation paths
-- `cmake/macros/moduleDeps.cpp.in` - Made module registration use configurable package name
-- `cmake/macros/genModuleDepsCpp.cmake` - Pass package name to template
+- `cmake/macros/moduleDeps.cpp.in` - Template for module registration with configurable package name
+- `cmake/macros/genModuleDepsCpp.cmake` - Script to generate moduleDeps.cpp at configure time
+
+### Branch Differences
+
+| Feature | dev branch | v24.11 branch |
+|---------|------------|---------------|
+| moduleDeps.cpp handling | Template-based generation (`moduleDeps.cpp.in`) | Build-time patching (`patchModuleDeps.py`) |
+| Configuration time | Configure time | Build time |
+| Additional files | `genModuleDepsCpp.cmake`, `moduleDeps.cpp.in` | `patchModuleDeps.py` |
 
 ### Plugin Discovery
 
@@ -217,18 +296,40 @@ set PXR_PLUGINPATH_NAME=C:\path\to\custom-usd\lib\usd
 
 ## Troubleshooting
 
-### Import Errors
+### Import Error: "No module named 'pxr_lte'"
 
 If you see `ModuleNotFoundError: No module named 'pxr_lte'`:
 - Verify the Python path includes the custom build's `lib/python` directory
 - Check that all files were installed correctly
+- Verify the `PXR_PYTHON_PACKAGE_NAME` CMake option was set during build
+
+### Import Error: "No module named 'pxr'" when importing pxr_lte
+
+If you see an error like `ModuleNotFoundError: No module named 'pxr'` when importing `pxr_lte`, it means the Python source files weren't properly patched. Check that:
+1. The `PXR_PYTHON_PACKAGE_NAME` CMake option is set
+2. The build completed successfully with "Patching __init__.py for custom package name" messages
+
+### Import Error: Module dependency issues (pxr.Tf not found)
+
+If you see errors about missing modules like `pxr.Tf`, it means the moduleDeps.cpp files weren't properly patched. Check that:
+1. For dev branch: `moduleDeps.cpp.in` template exists in `cmake/macros/`
+2. For v24.11: `patchModuleDeps.py` script exists in `cmake/macros/`
+3. The build shows "Patching moduleDeps.cpp for custom package name" messages
+4. The generated/patched files contain `pxr_lte.` instead of `pxr.`
 
 ### DLL Not Found (Windows)
 
 If you see DLL loading errors:
-- Use `os.add_dll_directory()` to add library paths
+- Use `os.add_dll_directory()` to add **both** `lib` and `bin` directories
 - Ensure TBB DLLs are accessible
 - Check that all `lte_*.dll` files are present
+
+```python
+import os
+os.add_dll_directory(r'C:\path\to\dist-usd-lte\lib')
+os.add_dll_directory(r'C:\path\to\dist-usd-lte\bin')
+os.add_dll_directory(r'C:\path\to\tbb\bin')
+```
 
 ### Symbol Conflicts
 
@@ -241,4 +342,5 @@ If you see crashes or strange behavior:
 
 - `build-lte-sameproc.bat` - Windows build script
 - `experiment/ns_dual/` - Test files for dual namespace usage
+- `docs/v24.11_custom_namespace_build.md` - v24.11-specific documentation (on v24.11-custom-namespace branch)
 - OpenUSD documentation on namespaces
