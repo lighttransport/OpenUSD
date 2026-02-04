@@ -22,20 +22,20 @@
 // Use the USD namespace (pxr_lte for custom build)
 PXR_NAMESPACE_USING_DIRECTIVE
 
+// Helper macro to stringify
+#define STRINGIFY_HELPER(x) #x
+#define STRINGIFY(x) STRINGIFY_HELPER(x)
+
 int main() {
     std::cout << "========================================\n";
     std::cout << "USD v24.11 Single Build Test (C++)\n";
     std::cout << "========================================\n\n";
 
     // Print namespace info
-#ifdef PXR_EXTERNAL_NAMESPACE
-    std::cout << "External namespace: " << BOOST_PP_STRINGIZE(PXR_EXTERNAL_NAMESPACE) << "\n";
+#ifdef PXR_NS
+    std::cout << "PXR_NS (external namespace): " << STRINGIFY(PXR_NS) << "\n";
 #else
-    std::cout << "External namespace: pxr (default)\n";
-#endif
-
-#ifdef PXR_INTERNAL_NS
-    std::cout << "Internal namespace: " << BOOST_PP_STRINGIZE(PXR_INTERNAL_NS) << "\n";
+    std::cout << "PXR_NS: not defined (default pxr)\n";
 #endif
 
     // Create an in-memory stage
