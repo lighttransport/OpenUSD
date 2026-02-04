@@ -1,0 +1,10 @@
+# Build output
+build/
+*.obj
+*.exe
+*.pdb
+*.ilk
+
+# Python cache
+__pycache__/
+*.pyc
