@@ -108,7 +108,7 @@ link /nologo ^
     /LIBPATH:"%UV_PYTHON_LIBS%" ^
     "%OUT_DIR%\test_usd_lte.obj" ^
     lte_tf.lib lte_sdf.lib lte_usd.lib lte_vt.lib lte_arch.lib lte_gf.lib lte_trace.lib lte_work.lib lte_plug.lib lte_ar.lib lte_boost.lib lte_python.lib ^
-    python311.lib tbb12.lib
+    python311.lib tbb.lib
 
 if errorlevel 1 (
     echo Link failed!
