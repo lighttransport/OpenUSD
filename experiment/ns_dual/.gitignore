@@ -5,6 +5,10 @@ build/
 *.pdb
 *.ilk
 
+# Temporary files
+build_output.txt
+build_error.txt
+
 # Python cache
 __pycache__/
 *.pyc
