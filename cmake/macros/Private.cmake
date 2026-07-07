@@ -1490,7 +1490,7 @@ function(_pxr_library NAME)
                 ARCHIVE DESTINATION ${libInstallPrefix}
                 RUNTIME DESTINATION ${libInstallPrefix}
             )
-            if(WIN32)
+            if(WIN32 AND MSVC)
                 install(
                     FILES $<TARGET_PDB_FILE:${NAME}>
                     DESTINATION ${libInstallPrefix}
@@ -1505,7 +1505,7 @@ function(_pxr_library NAME)
                 ARCHIVE DESTINATION ${libInstallPrefix}
                 RUNTIME DESTINATION ${libInstallPrefix}
             )
-            if(WIN32)
+            if(WIN32 AND MSVC)
                 install(
                     FILES $<TARGET_PDB_FILE:${NAME}>
                     EXPORT pxrTargets

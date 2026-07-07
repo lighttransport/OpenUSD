@@ -64,9 +64,16 @@ public:
     using Key = TraceDynamicKey;
 
     /// Returns the singleton instance.
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+    // Out-of-line on Windows with a non-MSVC compiler; see
+    // TfScriptModuleLoader::GetInstance() in pxr/base/tf/scriptModuleLoader.h/.cpp
+    // for why this can't be an inline body here.
+    TRACE_API static TraceCollector& GetInstance();
+#else
     TRACE_API static TraceCollector& GetInstance() {
          return TfSingleton<TraceCollector>::GetInstance();
     }
+#endif
     
     TRACE_API ~TraceCollector();
 

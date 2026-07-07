@@ -114,6 +114,13 @@ Tf_UnhandledAbort()
 
 TF_INSTANTIATE_SINGLETON(TfDiagnosticMgr);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+TfDiagnosticMgr &
+TfDiagnosticMgr::GetInstance()
+{
+    return TfSingleton<This>::GetInstance();
+}
+#endif
 
 TfDiagnosticMgr::Delegate::~Delegate() {}
 

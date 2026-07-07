@@ -84,10 +84,18 @@ public:
         UsdSchemaKind kind;
     };
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+    // Out-of-line on Windows with a non-MSVC compiler; see
+    // TfScriptModuleLoader::GetInstance() in pxr/base/tf/scriptModuleLoader.h/.cpp
+    // for why this can't be an inline body here.
+    USD_API
+    static UsdSchemaRegistry& GetInstance();
+#else
     USD_API
     static UsdSchemaRegistry& GetInstance() {
         return TfSingleton<UsdSchemaRegistry>::GetInstance();
     }
+#endif
 
     /// Creates the schema identifier that would be used to define a schema of
     /// the given \p schemaFamily with the given \p schemaVersion.

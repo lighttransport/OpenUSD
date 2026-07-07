@@ -32,6 +32,7 @@
 #include <functional>
 #include <io.h>
 #include <process.h>
+#include <share.h>
 #include <Windows.h>
 #include <WinIoCtl.h>
 #else

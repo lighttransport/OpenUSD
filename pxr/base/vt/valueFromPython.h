@@ -99,9 +99,16 @@ private:
         _ExtractFunc _extract;
     };
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+    // Out-of-line on Windows with a non-MSVC compiler; see
+    // TfScriptModuleLoader::GetInstance() in pxr/base/tf/scriptModuleLoader.h/.cpp
+    // for why this can't be an inline body here.
+    VT_API static Vt_ValueFromPythonRegistry &_GetInstance();
+#else
     VT_API static Vt_ValueFromPythonRegistry &_GetInstance() {
         return TfSingleton<Vt_ValueFromPythonRegistry>::GetInstance();
     }
+#endif
     
     VT_API void _RegisterLValue(_Extractor const &e);
     VT_API void _RegisterRValue(_Extractor const &e);

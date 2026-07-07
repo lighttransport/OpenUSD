@@ -17,6 +17,14 @@ PXR_NAMESPACE_OPEN_SCOPE
 
 TF_INSTANTIATE_SINGLETON(Tf_PyEnumRegistry);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+Tf_PyEnumRegistry &
+Tf_PyEnumRegistry::GetInstance()
+{
+    return TfSingleton<This>::GetInstance();
+}
+#endif
+
 using std::string;
 
 using namespace pxr_boost::python;

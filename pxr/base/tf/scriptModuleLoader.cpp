@@ -119,6 +119,14 @@ PXR_NAMESPACE_OPEN_SCOPE
 
 TF_INSTANTIATE_SINGLETON(TfScriptModuleLoader);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+TfScriptModuleLoader &
+TfScriptModuleLoader::GetInstance()
+{
+    return TfSingleton<This>::GetInstance();
+}
+#endif
+
 using std::pair;
 using std::string;
 using std::vector;

@@ -45,9 +45,18 @@ class TfScriptModuleLoader : public TfWeakBase {
     typedef TfScriptModuleLoader This;
 
     /// Return the singleton instance.
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+    // Out-of-line on Windows with a non-MSVC compiler (e.g. mingw-clang):
+    // unlike MSVC, such compilers do not suppress inlining of a dllimport
+    // function that has a visible definition, so an inline body here would
+    // cause consumers to reference TfSingleton<This>'s internals directly,
+    // which are never exported across the DLL boundary. See scriptModuleLoader.cpp.
+    TF_API static This &GetInstance();
+#else
     TF_API static This &GetInstance() {
         return TfSingleton<This>::GetInstance();
-    } 
+    }
+#endif
 
     /// Register a library named \a name and with script module \a moduleName
     /// and libraries which must be loaded first \a predecessors. The script

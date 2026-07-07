@@ -61,6 +61,14 @@ TF_DEFINE_ENV_SETTING(
 
 TF_INSTANTIATE_SINGLETON(UsdSchemaRegistry);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+UsdSchemaRegistry&
+UsdSchemaRegistry::GetInstance()
+{
+    return TfSingleton<UsdSchemaRegistry>::GetInstance();
+}
+#endif
+
 TF_DEFINE_PRIVATE_TOKENS(
     _tokens,
     (appliedAPISchemas)

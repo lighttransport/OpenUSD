@@ -286,7 +286,8 @@ struct Arch_ConstructorEntry {
     };                                                                         \
     static void _name()
 
-#elif defined(ARCH_COMPILER_GCC) || defined(ARCH_COMPILER_CLANG)
+#elif (defined(ARCH_COMPILER_GCC) || defined(ARCH_COMPILER_CLANG)) && \
+      !defined(ARCH_OS_WINDOWS)
 
 // The used attribute is required to prevent these apparently unused functions
 // from being removed by the linker.
@@ -298,21 +299,23 @@ struct Arch_ConstructorEntry {
         static void _name()
 
 #elif defined(ARCH_OS_WINDOWS)
-    
+
 #    include "pxr/base/arch/api.h"
-    
+
 // Entry for a constructor/destructor in the custom section.
-    __declspec(align(16))
-    struct Arch_ConstructorEntry {
+    struct alignas(16) Arch_ConstructorEntry {
         typedef void (__cdecl *Type)(void);
         Type function;
         unsigned int version:24;    // USD version
         unsigned int priority:8;    // Priority of function
     };
 
-// Declare the special sections.
+#if defined(ARCH_COMPILER_MSVC)
+// Declare the special sections.  (Only meaningful to MSVC; GCC/clang's
+// section attribute below needs no separate declaration.)
 #   pragma section(".pxrctor", read)
 #   pragma section(".pxrdtor", read)
+#endif
 
 // Objects of this type run the ARCH_CONSTRUCTOR and ARCH_DESTRUCTOR functions
 // for the library containing the object in the c'tor and d'tor, respectively.
@@ -321,6 +324,8 @@ struct Arch_ConstructorInit {
     ARCH_API Arch_ConstructorInit();
     ARCH_API ~Arch_ConstructorInit();
 };
+
+#if defined(ARCH_COMPILER_MSVC)
 
 // Emit an Arch_ConstructorEntry in the .pxrctor section.  The
 // arch_{c,d}tor_unused assignment is a workaround to ensure arch_{c,d}tor
@@ -362,6 +367,49 @@ struct Arch_ConstructorInit {
     }                                                                          \
     _ARCH_ENSURE_PER_LIB_INIT(Arch_ConstructorInit, _archCtorInit);            \
     static void _name()
+
+#elif defined(ARCH_COMPILER_GCC) || defined(ARCH_COMPILER_CLANG)
+
+// GCC/clang targeting Windows (e.g. mingw-w64) have no equivalent of
+// MSVC's __declspec(allocate(...))/#pragma section for placing a variable
+// into an arbitrary named PE section shared across translation units.
+// Instead, place each entry directly into the named section via the GNU
+// section attribute; "used" prevents the linker from discarding it as
+// dead data. The Arch_ConstructorEntry consumers (see attributes.cpp)
+// find these entries by scanning the PE section header table by name at
+// runtime, so this only requires the section to exist and be populated --
+// no linker script or start/stop symbol support is required, unlike the
+// analogous ELF constructor-section mechanism on Linux.
+#   define ARCH_CONSTRUCTOR(_name, _priority)                                  \
+    static void _name();                                                       \
+    namespace {                                                                \
+    __attribute__((used, section(".pxrctor")))                                 \
+    static const Arch_ConstructorEntry                                         \
+    _ARCH_CAT_NOEXPAND(arch_ctor_, _name) = {                                  \
+        reinterpret_cast<Arch_ConstructorEntry::Type>(&_name),                 \
+        static_cast<unsigned>(PXR_VERSION),                                    \
+        _priority                                                              \
+    };                                                                         \
+    }                                                                          \
+    _ARCH_ENSURE_PER_LIB_INIT(Arch_ConstructorInit, _archCtorInit);            \
+    static void _name()
+
+    // Emit a Arch_ConstructorEntry in the .pxrdtor section.
+#   define ARCH_DESTRUCTOR(_name, _priority)                                   \
+    static void _name();                                                       \
+    namespace {                                                                \
+    __attribute__((used, section(".pxrdtor")))                                 \
+    static const Arch_ConstructorEntry                                         \
+    _ARCH_CAT_NOEXPAND(arch_dtor_, _name) = {                                  \
+        reinterpret_cast<Arch_ConstructorEntry::Type>(&_name),                 \
+        static_cast<unsigned>(PXR_VERSION),                                    \
+        _priority                                                              \
+    };                                                                         \
+    }                                                                          \
+    _ARCH_ENSURE_PER_LIB_INIT(Arch_ConstructorInit, _archCtorInit);            \
+    static void _name()
+
+#endif // ARCH_COMPILER_MSVC / ARCH_COMPILER_GCC || ARCH_COMPILER_CLANG
 
 #else
 

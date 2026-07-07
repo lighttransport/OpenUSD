@@ -82,10 +82,17 @@ class TfRefPtrTracker : public TfWeakBase {
 public:
     enum TraceType { Add, Assign };
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+    // Out-of-line on Windows with a non-MSVC compiler; see
+    // TfScriptModuleLoader::GetInstance() in scriptModuleLoader.h/.cpp for
+    // why this can't be an inline body here.
+    TF_API static TfRefPtrTracker& GetInstance();
+#else
     TF_API static TfRefPtrTracker& GetInstance()
     {
          return TfSingleton<TfRefPtrTracker>::GetInstance();
     }
+#endif
 
     /// Returns the maximum stack trace depth.
     TF_API

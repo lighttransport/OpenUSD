@@ -37,6 +37,14 @@ static const size_t _NumInternalStackLevels = 2;
 
 TF_INSTANTIATE_SINGLETON(TfRefPtrTracker);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+TfRefPtrTracker &
+TfRefPtrTracker::GetInstance()
+{
+    return TfSingleton<TfRefPtrTracker>::GetInstance();
+}
+#endif
+
 TfRefPtrTracker::TfRefPtrTracker() : _maxDepth(20)
 {
     // Do nothing

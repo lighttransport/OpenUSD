@@ -72,7 +72,7 @@ int ArchLibraryClose(void* handle)
 void* ArchLibraryGetSymbolAddress(void* handle, const char* name)
 {
 #if defined(ARCH_OS_WINDOWS)
-    return GetProcAddress(reinterpret_cast<HMODULE>(handle), name);
+    return reinterpret_cast<void*>(GetProcAddress(reinterpret_cast<HMODULE>(handle), name));
 #else
     return dlsym(handle, name);
 #endif

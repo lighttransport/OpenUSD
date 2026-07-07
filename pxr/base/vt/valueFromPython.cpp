@@ -15,6 +15,14 @@ PXR_NAMESPACE_OPEN_SCOPE
 
 TF_INSTANTIATE_SINGLETON(Vt_ValueFromPythonRegistry);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+Vt_ValueFromPythonRegistry &
+Vt_ValueFromPythonRegistry::_GetInstance()
+{
+    return TfSingleton<Vt_ValueFromPythonRegistry>::GetInstance();
+}
+#endif
+
 Vt_ValueFromPythonRegistry::~Vt_ValueFromPythonRegistry() = default;
 
 VtValue

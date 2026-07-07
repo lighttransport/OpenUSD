@@ -1886,6 +1886,14 @@ SdfSchemaBase::_AddRequiredFieldName(const TfToken &fieldName)
 
 TF_INSTANTIATE_SINGLETON(SdfSchema);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+const SdfSchema&
+SdfSchema::GetInstance()
+{
+    return TfSingleton<SdfSchema>::GetInstance();
+}
+#endif
+
 TF_REGISTRY_FUNCTION(TfType)
 {
     TfType::Define<SdfSchema, TfType::Bases<SdfSchemaBase> >();

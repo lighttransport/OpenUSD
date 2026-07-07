@@ -53,9 +53,12 @@ ArchStrerror(int errorCode)
     //
     char* result = strerror_r(errorCode, msg_buf, sizeof(msg_buf));
     return std::string(result);
-#elif !defined(ARCH_COMPILER_MSVC)
+#elif !defined(ARCH_OS_WINDOWS)
     strerror_r(errorCode, msg_buf, 256);
 #else
+    // Windows' C runtime (UCRT) only provides strerror_s, not the POSIX
+    // strerror_r, regardless of whether the compiler is MSVC or a
+    // Windows-targeting GCC/clang (e.g. mingw-w64).
     strerror_s(msg_buf, 256, errorCode);
 #endif // _GNU_SOURCE
     return msg_buf;

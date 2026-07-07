@@ -136,9 +136,16 @@ public:
     };
 
     /// Return the singleton instance.
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+    // Out-of-line on Windows with a non-MSVC compiler; see
+    // TfScriptModuleLoader::GetInstance() in scriptModuleLoader.h/.cpp for
+    // why this can't be an inline body here.
+    TF_API static This &GetInstance();
+#else
     TF_API static This &GetInstance() {
         return TfSingleton<This>::GetInstance();
     }
+#endif
 
     /// Add the delegate \p delegate to the list of current delegates.
     ///

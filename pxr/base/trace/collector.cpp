@@ -39,6 +39,14 @@ PXR_NAMESPACE_OPEN_SCOPE
 
 TF_INSTANTIATE_SINGLETON(TraceCollector);
 
+#if defined(ARCH_OS_WINDOWS) && !defined(ARCH_COMPILER_MSVC)
+TraceCollector&
+TraceCollector::GetInstance()
+{
+    return TfSingleton<TraceCollector>::GetInstance();
+}
+#endif
+
 std::atomic<int> TraceCollector::_isEnabled(0);
 
 TraceCollector::_PerThreadData* TraceCollector::_GetThreadData() noexcept
