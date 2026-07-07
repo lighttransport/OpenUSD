@@ -1,4 +1,4 @@
-# Dual Namespace USD Experiment (v24.11)
+# Dual Namespace USD Experiment (v26.05)
 
 This directory contains code, scripts, and documentation for experimenting with loading both ordinary USD (standard `pxr` namespace) and custom namespace USD (`pxr_lte` namespace with `lte_` library prefix) simultaneously.
 
@@ -8,7 +8,7 @@ This experiment supports same-process dual USD import on Windows. Both `pxr` and
 
 ### Quick Start
 
-1. **Build custom namespace USD v24.11:**
+1. **Build custom namespace USD v26.05:**
    ```batch
    # From OpenUSD root
    configure-usd-lte.bat
@@ -25,7 +25,7 @@ This experiment supports same-process dual USD import on Windows. Both `pxr` and
    import pxr_lte_setup  # Auto-configures paths
 
    from pxr import Usd as StandardUsd       # Standard USD (pip usd-core)
-   from pxr_lte import Usd as CustomUsd     # Custom namespace USD (v24.11)
+   from pxr_lte import Usd as CustomUsd     # Custom namespace USD (v26.05)
 
    # They are completely independent
    std_stage = StandardUsd.Stage.CreateInMemory()
@@ -70,7 +70,7 @@ The custom namespace build uses:
 | Build | Path | Libraries |
 |-------|------|-----------|
 | Standard (pip) | pip install usd-core | `usd_*.pyd` |
-| Custom v24.11 | `dist-usd-lte-v24.11` | `lte_*.dll` |
+| Custom v26.05 | `dist-usd-lte-v26.05` | `lte_*.dll` |
 
 ## Same-Process Dual USD
 
@@ -82,7 +82,7 @@ import pxr_lte_setup
 
 # Import both
 from pxr import Usd as StandardUsd       # pip usd-core
-from pxr_lte import Usd as CustomUsd     # custom v24.11 build
+from pxr_lte import Usd as CustomUsd     # custom v26.05 build
 
 # Use directly
 std_stage = StandardUsd.Stage.CreateInMemory()
@@ -133,7 +133,7 @@ build_cpp_test.bat
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `CUSTOM_USD_ROOT` | Custom USD installation | `~/work/dist-usd-lte-v24.11` |
+| `CUSTOM_USD_ROOT` | Custom USD installation | `~/work/dist-usd-lte-v26.05` |
 | `TBB_ROOT` | TBB installation | `~/work/dist-tbb-reldeb` |
 
 ## Troubleshooting
@@ -159,7 +159,7 @@ custom_prim = custom_stage.GetPrimAtPath(path_str)
 
 ## Further Reading
 
-- [Dual Namespace Build Guide](../../docs/v24.11_custom_namespace_build.md)
+- [Dual Namespace Build Guide](../../docs/v26.05_custom_namespace_build.md)
 - `configure-usd-lte.bat` - Configure script
 - `build-usd-lte.bat` - Build script
 

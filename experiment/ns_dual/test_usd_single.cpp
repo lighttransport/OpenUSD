@@ -1,12 +1,12 @@
 /**
  * test_usd_single.cpp
  *
- * Test USD linking with a single build (pxr_lte custom namespace v24.11).
+ * Test USD linking with a single build (pxr_lte custom namespace v26.05).
  * Build this with the custom USD installation to verify linking works.
  *
- * Build for Custom USD v24.11 (pxr_lte):
- *   cl /EHsc /std:c++17 /MD /I "dist-usd-lte-v24.11/include" test_usd_single.cpp
- *      /link /LIBPATH:"dist-usd-lte-v24.11/lib" lte_tf.lib lte_sdf.lib lte_usd.lib
+ * Build for Custom USD v26.05 (pxr_lte):
+ *   cl /EHsc /std:c++17 /MD /I "dist-usd-lte-v26.05/include" test_usd_single.cpp
+ *      /link /LIBPATH:"dist-usd-lte-v26.05/lib" lte_tf.lib lte_sdf.lib lte_usd.lib
  */
 
 #include <iostream>
@@ -28,7 +28,7 @@ PXR_NAMESPACE_USING_DIRECTIVE
 
 int main() {
     std::cout << "========================================\n";
-    std::cout << "USD v24.11 Single Build Test (C++)\n";
+    std::cout << "USD v26.05 Single Build Test (C++)\n";
     std::cout << "========================================\n\n";
 
     // Print namespace info
@@ -65,7 +65,7 @@ int main() {
     std::cout << "  Created: " << childMesh.GetPath() << " (" << childMesh.GetTypeName() << ")\n";
 
     // Set some metadata
-    prim.SetDocumentation("Created by C++ test for USD v24.11");
+    prim.SetDocumentation("Created by C++ test for USD v26.05");
     stage->SetMetadata(TfToken("comment"), std::string("Test stage from pxr_lte"));
     std::cout << "\n  Set documentation metadata\n";
 

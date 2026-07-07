@@ -431,7 +431,7 @@ function(pxr_library NAME)
             _get_python_module_name(${NAME} pyModuleName)
             add_custom_command(
                 OUTPUT ${moduleDepsFileName}
-                COMMAND ${CMAKE_COMMAND} -DlibraryName=${NAME} -DmoduleName=${pyModuleName} -DsourceDir=${PROJECT_SOURCE_DIR} -Dlibraries="${localLibs}" -Doutfile=${moduleDepsFileName} -P "${PROJECT_SOURCE_DIR}/cmake/macros/genModuleDepsCpp.cmake"
+                COMMAND ${CMAKE_COMMAND} -DlibraryName=${NAME} -DmoduleName=${pyModuleName} -DsourceDir=${PROJECT_SOURCE_DIR} -Dlibraries="${localLibs}" -DpackageName=${PXR_PYTHON_PACKAGE_NAME} -Doutfile=${moduleDepsFileName} -P "${PROJECT_SOURCE_DIR}/cmake/macros/genModuleDepsCpp.cmake"
                 DEPENDS "CMakeLists.txt")
         endif()
     endif()

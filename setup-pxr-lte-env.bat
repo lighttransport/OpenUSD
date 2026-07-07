@@ -1,5 +1,5 @@
 @echo off
-REM Setup environment for using pxr_lte (custom namespace USD v24.11)
+REM Setup environment for using pxr_lte (custom namespace USD v26.05)
 REM
 REM This script sets up PATH and PYTHONPATH for the custom namespace USD build.
 REM Run this in a command prompt before using pxr_lte.
@@ -17,7 +17,7 @@ REM ============================================================================
 set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 
-set USD_LTE_DIR=%SCRIPT_DIR%\..\dist-usd-lte-v24.11
+set USD_LTE_DIR=%SCRIPT_DIR%\..\dist-usd-lte-v26.05
 set TBB_DIR=%SCRIPT_DIR%\..\dist-tbb-reldeb
 
 REM Python (uv-installed)
@@ -43,7 +43,7 @@ REM ============================================================================
 REM Set environment variables
 REM ============================================================================
 
-echo Setting up environment for pxr_lte (USD v24.11)...
+echo Setting up environment for pxr_lte (USD v26.05)...
 echo.
 
 endlocal & (
@@ -57,7 +57,7 @@ echo   TBB:     %TBB_DIR%
 echo   Python:  %UV_PYTHON_DIR%
 echo.
 echo You can now use pxr_lte in Python:
-echo   python -c "from pxr_lte import Usd; print('v24.11:', Usd.GetVersion())"
+echo   python -c "from pxr_lte import Usd; print('v26.05:', Usd.GetVersion())"
 echo.
 echo For same-process dual USD:
 echo   python -c "from pxr import Usd as P; from pxr_lte import Usd as L; print('pxr:', P.GetVersion(), 'pxr_lte:', L.GetVersion())"

@@ -1,5 +1,5 @@
 @echo off
-REM Build C++ USD test with Visual Studio 2022 for pxr_lte v24.11 MONOLITHIC
+REM Build C++ USD test with Visual Studio 2022 for pxr_lte v26.05 MONOLITHIC
 REM Creates executable linked with custom namespace USD (monolithic library)
 
 setlocal enabledelayedexpansion
@@ -8,8 +8,8 @@ REM Set paths
 set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 
-REM USD v24.11 custom namespace MONOLITHIC install directory
-set "DIST_LTE=%USERPROFILE%\work\dist-usd-lte-monolithic-v24.11"
+REM USD v26.05 custom namespace MONOLITHIC install directory
+set "DIST_LTE=%USERPROFILE%\work\dist-usd-lte-monolithic-v26.05"
 set "TBB_DIR=%USERPROFILE%\work\dist-tbb-reldeb"
 
 REM uv Python for DLLs and includes
@@ -22,9 +22,9 @@ set OUT_DIR=%SCRIPT_DIR%\build
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
 echo ========================================
-echo Building C++ USD Test (VS2022) - v24.11 MONOLITHIC
+echo Building C++ USD Test (VS2022) - v26.05 MONOLITHIC
 echo ========================================
-echo Custom USD v24.11: %DIST_LTE%
+echo Custom USD v26.05: %DIST_LTE%
 echo TBB:               %TBB_DIR%
 echo Output:            %OUT_DIR%
 echo ========================================
@@ -32,9 +32,9 @@ echo.
 
 REM Verify paths exist
 if not exist "%DIST_LTE%\include\pxr\pxr.h" (
-    echo ERROR: Custom USD v24.11 monolithic not found at %DIST_LTE%
+    echo ERROR: Custom USD v26.05 monolithic not found at %DIST_LTE%
     echo.
-    echo Please build USD v24.11 first:
+    echo Please build USD v26.05 first:
     echo   configure-usd-lte-monolithic.bat
     echo   build-usd-lte-monolithic.bat all
     exit /b 1
@@ -87,7 +87,7 @@ set CXX_FLAGS=/EHsc /std:c++17 /MD /D__TBB_NO_IMPLICIT_LINKAGE /DNOMINMAX /D_USE
 
 echo.
 echo ========================================
-echo Building with Custom USD v24.11 (pxr_lte) - MONOLITHIC
+echo Building with Custom USD v26.05 (pxr_lte) - MONOLITHIC
 echo ========================================
 
 REM Compile

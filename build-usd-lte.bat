@@ -1,5 +1,5 @@
 @echo off
-REM Build OpenUSD v24.11 with custom namespace (after configuration)
+REM Build OpenUSD v26.05 with custom namespace (after configuration)
 REM
 REM This script builds and/or installs USD after CMake configuration.
 REM Run configure-lte-sameproc.bat first!
@@ -24,7 +24,7 @@ set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 set SOURCE_DIR=%SCRIPT_DIR%
 set BUILD_DIR=%SOURCE_DIR%\build-lte-sameproc
-set INSTALL_DIR=%SOURCE_DIR%\..\dist-usd-lte-v24.11
+set INSTALL_DIR=%SOURCE_DIR%\..\dist-usd-lte-v26.05
 set TBB_ROOT=%SOURCE_DIR%\..\dist-tbb-reldeb
 
 REM Build type and parallelism
@@ -63,7 +63,7 @@ if not exist "%BUILD_DIR%\CMakeCache.txt" (
 )
 
 echo ========================================
-echo Building OpenUSD v24.11 (Custom Namespace)
+echo Building OpenUSD v26.05 (Custom Namespace)
 echo ========================================
 echo.
 echo Build directory: %BUILD_DIR%
@@ -104,7 +104,7 @@ if not exist "%BUILD_DIR%\CMakeCache.txt" (
 )
 
 echo ========================================
-echo Installing OpenUSD v24.11 (Custom Namespace)
+echo Installing OpenUSD v26.05 (Custom Namespace)
 echo ========================================
 echo.
 echo Install directory: %INSTALL_DIR%
@@ -137,7 +137,7 @@ if not exist "%BUILD_DIR%\CMakeCache.txt" (
 )
 
 echo ========================================
-echo Building and Installing OpenUSD v24.11
+echo Building and Installing OpenUSD v26.05
 echo ========================================
 echo.
 echo Build directory:   %BUILD_DIR%
@@ -193,7 +193,7 @@ echo ========================================
 echo Build completed successfully!
 echo ========================================
 echo.
-echo USD v24.11 installed to: %INSTALL_DIR%
+echo USD v26.05 installed to: %INSTALL_DIR%
 echo.
 echo Custom namespace configuration:
 echo   C++ namespace:   %LTE_NAMESPACE%
@@ -208,7 +208,7 @@ echo   os.add_dll_directory(r'%TBB_ROOT%\bin')
 echo   sys.path.insert(0, r'%INSTALL_DIR%\lib\python')
 echo.
 echo   from pxr import Usd as StandardUsd      # Standard USD (pip)
-echo   from %LTE_PYTHON_PACKAGE% import Usd as CustomUsd    # This build (v24.11)
+echo   from %LTE_PYTHON_PACKAGE% import Usd as CustomUsd    # This build (v26.05)
 echo.
 echo Environment setup (optional):
 echo   set PATH=%INSTALL_DIR%\bin;%INSTALL_DIR%\lib;%TBB_ROOT%\bin;%%PATH%%

@@ -2,7 +2,7 @@
 Helper module for setting up custom namespace USD (pxr_lte) alongside standard USD.
 
 This module automatically configures Python paths and DLL search directories
-to allow importing both 'pxr' (standard USD) and 'pxr_lte' (custom namespace USD v24.11)
+to allow importing both 'pxr' (standard USD) and 'pxr_lte' (custom namespace USD v26.05)
 in the same Python process.
 
 Usage:
@@ -14,13 +14,13 @@ Usage:
     # Method 2: Explicit setup with custom paths
     import pxr_lte_setup
     pxr_lte_setup.setup(
-        custom_usd_root="C:/path/to/dist-usd-lte-v24.11",
+        custom_usd_root="C:/path/to/dist-usd-lte-v26.05",
         tbb_root="C:/path/to/tbb"
     )
     from pxr_lte import Usd
 
 Environment Variables:
-    CUSTOM_USD_ROOT - Path to custom USD installation (default: ~/work/dist-usd-lte-v24.11)
+    CUSTOM_USD_ROOT - Path to custom USD installation (default: ~/work/dist-usd-lte-v26.05)
     TBB_ROOT        - Path to TBB installation (default: ~/work/dist-tbb-reldeb)
 """
 
@@ -36,8 +36,8 @@ __all__ = ["setup", "is_setup", "get_paths"]
 _is_setup = False
 _paths = {}
 
-# Default paths for v24.11 (can be overridden via environment variables or setup())
-DEFAULT_CUSTOM_USD_ROOT = Path.home() / "work" / "dist-usd-lte-v24.11"
+# Default paths for v26.05 (can be overridden via environment variables or setup())
+DEFAULT_CUSTOM_USD_ROOT = Path.home() / "work" / "dist-usd-lte-v26.05"
 DEFAULT_TBB_ROOT = Path.home() / "work" / "dist-tbb-reldeb"
 
 
@@ -60,14 +60,14 @@ def is_setup():
 
 
 def setup(custom_usd_root=None, tbb_root=None, verbose=False):
-    """Set up paths for custom namespace USD v24.11.
+    """Set up paths for custom namespace USD v26.05.
 
     This function adds the necessary DLL search directories and Python paths
     to enable importing pxr_lte alongside standard pxr.
 
     Args:
         custom_usd_root: Path to custom USD installation.
-                        Defaults to CUSTOM_USD_ROOT env var or ~/work/dist-usd-lte-v24.11
+                        Defaults to CUSTOM_USD_ROOT env var or ~/work/dist-usd-lte-v26.05
         tbb_root: Path to TBB installation.
                  Defaults to TBB_ROOT env var or ~/work/dist-tbb-reldeb
         verbose: If True, print setup information
@@ -109,7 +109,7 @@ def setup(custom_usd_root=None, tbb_root=None, verbose=False):
     }
 
     if verbose:
-        print(f"Setting up pxr_lte paths (v24.11):")
+        print(f"Setting up pxr_lte paths (v26.05):")
         print(f"  Custom USD root: {custom_usd_root}")
         print(f"  TBB root: {tbb_root}")
 
@@ -205,7 +205,7 @@ def verify():
 
 if __name__ == "__main__":
     # When run as script, do verbose setup and verification
-    print("pxr_lte_setup - Dual USD Setup Helper (v24.11)")
+    print("pxr_lte_setup - Dual USD Setup Helper (v26.05)")
     print("=" * 50)
 
     setup(verbose=True)
@@ -247,7 +247,7 @@ if __name__ == "__main__":
         print()
         print("pxr_lte import failed. Check build and paths.")
         print()
-        print("Build USD v24.11 with custom namespace:")
+        print("Build USD v26.05 with custom namespace:")
         print("  configure-usd-lte.bat")
         print("  build-usd-lte.bat all")
         sys.exit(1)

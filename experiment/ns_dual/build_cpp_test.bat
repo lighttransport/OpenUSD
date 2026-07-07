@@ -1,5 +1,5 @@
 @echo off
-REM Build C++ USD test with Visual Studio 2022 for pxr_lte v24.11
+REM Build C++ USD test with Visual Studio 2022 for pxr_lte v26.05
 REM Creates executable linked with custom namespace USD
 
 setlocal enabledelayedexpansion
@@ -9,8 +9,8 @@ set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 set REPO_ROOT=%SCRIPT_DIR%\..\..
 
-REM USD v24.11 custom namespace install directory
-set DIST_LTE=%REPO_ROOT%\..\dist-usd-lte-v24.11
+REM USD v26.05 custom namespace install directory
+set DIST_LTE=%REPO_ROOT%\..\dist-usd-lte-v26.05
 set TBB_DIR=%REPO_ROOT%\..\dist-tbb-reldeb
 
 REM uv Python for DLLs and includes
@@ -23,9 +23,9 @@ set OUT_DIR=%SCRIPT_DIR%\build
 if not exist "%OUT_DIR%" mkdir "%OUT_DIR%"
 
 echo ========================================
-echo Building C++ USD Test (VS2022) - v24.11
+echo Building C++ USD Test (VS2022) - v26.05
 echo ========================================
-echo Custom USD v24.11: %DIST_LTE%
+echo Custom USD v26.05: %DIST_LTE%
 echo TBB:               %TBB_DIR%
 echo Output:            %OUT_DIR%
 echo ========================================
@@ -33,9 +33,9 @@ echo.
 
 REM Verify paths exist
 if not exist "%DIST_LTE%\include\pxr\pxr.h" (
-    echo ERROR: Custom USD v24.11 not found at %DIST_LTE%
+    echo ERROR: Custom USD v26.05 not found at %DIST_LTE%
     echo.
-    echo Please build USD v24.11 first:
+    echo Please build USD v26.05 first:
     echo   configure-usd-lte.bat
     echo   build-usd-lte.bat all
     exit /b 1
@@ -79,7 +79,7 @@ set CXX_FLAGS=/EHsc /std:c++17 /MD /D__TBB_NO_IMPLICIT_LINKAGE /DNOMINMAX /D_USE
 
 echo.
 echo ========================================
-echo Building with Custom USD v24.11 (pxr_lte)
+echo Building with Custom USD v26.05 (pxr_lte)
 echo ========================================
 
 REM Compile

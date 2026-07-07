@@ -3,7 +3,7 @@ REM Set up a repo-local Python environment using rez and install USD deps.
 REM Uses uv-installed Python 3.11
 REM
 REM This script creates a rez-managed Python environment with USD dependencies
-REM for building OpenUSD v24.11 with custom namespace support.
+REM for building OpenUSD v26.05 with custom namespace support.
 REM
 REM Prerequisites:
 REM   - uv (https://docs.astral.sh/uv/)
@@ -37,11 +37,11 @@ REM Use uv-installed Python 3.11
 set UV_PYTHON_DIR=%USERPROFILE%\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none
 set UV_PYTHON=%UV_PYTHON_DIR%\python.exe
 
-REM Python dependencies for USD v24.11
+REM Python dependencies for USD v26.05
 set PY_DEPS=jinja2 PySide6 PyOpenGL
 
 echo ========================================
-echo Setting up Python with rez (v24.11)
+echo Setting up Python with rez (v26.05)
 echo ========================================
 echo Python: %UV_PYTHON%
 echo Rez install: %REZ_DIR%
@@ -91,7 +91,7 @@ set REZ_CONFIG_FILE=%REZ_DIR%\rezconfig.py
 REM Create rez configuration file
 echo Creating rez configuration...
 (
-echo # Rez configuration for OpenUSD v24.11
+echo # Rez configuration for OpenUSD v26.05
 echo import os
 echo.
 echo # Package search paths
@@ -195,7 +195,7 @@ if not exist "%USD_DEPS_PKG_DIR%" mkdir "%USD_DEPS_PKG_DIR%"
 echo name = "usd_deps"
 echo version = "1.0"
 echo.
-echo description = "Meta-package for OpenUSD v24.11 Python dependencies"
+echo description = "Meta-package for OpenUSD v26.05 Python dependencies"
 echo.
 echo requires = [
 echo     "python-3.11+",
@@ -257,12 +257,12 @@ echo Creating activation script...
 set ACTIVATE_SCRIPT=%REZ_DIR%\activate.bat
 (
 echo @echo off
-echo REM Activate rez environment for OpenUSD v24.11
+echo REM Activate rez environment for OpenUSD v26.05
 echo REM Include uv-installed Python path for DLLs
 echo set UV_PYTHON_DIR=%%USERPROFILE%%\AppData\Roaming\uv\python\cpython-3.11.14-windows-x86_64-none
 echo set PATH=%%UV_PYTHON_DIR%%;%REZ_VENV%\Scripts;%%PATH%%
 echo set REZ_CONFIG_FILE=%REZ_CONFIG_FILE%
-echo echo Rez environment activated for OpenUSD v24.11.
+echo echo Rez environment activated for OpenUSD v26.05.
 echo echo.
 echo echo Available commands:
 echo echo   rez-env python        - Enter Python environment
@@ -273,13 +273,13 @@ echo echo   rez-context           - Show current environment
 
 REM Create pxr_lte rez package placeholder
 echo Creating pxr_lte rez package placeholder...
-set PXR_LTE_PKG_DIR=%REZ_LOCAL_PACKAGES_DIR%\pxr_lte\24.11
+set PXR_LTE_PKG_DIR=%REZ_LOCAL_PACKAGES_DIR%\pxr_lte\26.05
 if not exist "%PXR_LTE_PKG_DIR%" mkdir "%PXR_LTE_PKG_DIR%"
 (
 echo name = "pxr_lte"
-echo version = "24.11"
+echo version = "26.05"
 echo.
-echo description = "OpenUSD v24.11 with custom namespace ^(pxr_lte^)"
+echo description = "OpenUSD v26.05 with custom namespace ^(pxr_lte^)"
 echo.
 echo requires = [
 echo     "python-3.11+",
@@ -288,7 +288,7 @@ echo.
 echo def commands^(^):
 echo     import os
 echo     # Set paths to pxr_lte installation
-echo     usd_lte_dir = os.path.join^(os.path.dirname^(os.path.dirname^(os.path.dirname^(os.path.dirname^(this.root^)^)^)^), 'dist-usd-lte-v24.11'^)
+echo     usd_lte_dir = os.path.join^(os.path.dirname^(os.path.dirname^(os.path.dirname^(os.path.dirname^(this.root^)^)^)^), 'dist-usd-lte-v26.05'^)
 echo     tbb_dir = os.path.join^(os.path.dirname^(os.path.dirname^(os.path.dirname^(os.path.dirname^(this.root^)^)^)^), 'dist-tbb-reldeb'^)
 echo.
 echo     env.PATH.prepend^(os.path.join^(usd_lte_dir, 'bin'^)^)
@@ -300,7 +300,7 @@ echo     env.PXR_PLUGINPATH_NAME = os.path.join^(usd_lte_dir, 'lib', 'usd'^)
 
 echo.
 echo ========================================
-echo Rez environment ready for OpenUSD v24.11
+echo Rez environment ready for OpenUSD v26.05
 echo ========================================
 echo.
 echo To activate rez:
@@ -309,7 +309,7 @@ echo.
 echo Then use:
 echo   rez-env python            ^(Python 3.11 environment^)
 echo   rez-env usd_deps          ^(All USD Python deps^)
-echo   rez-env pxr_lte           ^(pxr_lte v24.11 environment^)
+echo   rez-env pxr_lte           ^(pxr_lte v26.05 environment^)
 echo   rez-env python jinja2     ^(Multiple packages^)
 echo.
 echo Rez packages created:
@@ -318,9 +318,9 @@ echo   - jinja2-3.1
 echo   - pyside6-6.10
 echo   - pyopengl-3.1
 echo   - usd_deps-1.0 ^(meta-package^)
-echo   - pxr_lte-24.11 ^(requires building USD first^)
+echo   - pxr_lte-26.05 ^(requires building USD first^)
 echo.
-echo Build USD v24.11 with:
+echo Build USD v26.05 with:
 echo   build-lte-sameproc.bat
 echo.
 echo ========================================

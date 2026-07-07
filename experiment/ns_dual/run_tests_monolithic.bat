@@ -1,5 +1,5 @@
 @echo off
-REM Run ns_dual tests on Windows for USD v24.11 MONOLITHIC build
+REM Run ns_dual tests on Windows for USD v26.05 MONOLITHIC build
 REM Tests custom namespace USD (pxr_lte) and optionally dual import with pip pxr
 
 setlocal enabledelayedexpansion
@@ -21,21 +21,21 @@ if not exist "%UV_PYTHON%" (
 )
 
 echo ========================================
-echo USD v24.11 Custom Namespace Tests (MONOLITHIC)
+echo USD v26.05 Custom Namespace Tests (MONOLITHIC)
 echo ========================================
 echo Python: %UV_PYTHON%
 echo ========================================
 echo.
 
 REM Test 1: pxr_lte only (monolithic)
-echo [Test 1] Testing pxr_lte only (custom namespace USD v24.11 MONOLITHIC)
+echo [Test 1] Testing pxr_lte only (custom namespace USD v26.05 MONOLITHIC)
 echo ----------------------------------------
 "%UV_PYTHON%" "%SCRIPT_DIR%\test_pxr_lte_only_monolithic.py"
 if errorlevel 1 (
     echo.
     echo Test 1 FAILED!
     echo.
-    echo Make sure to build USD v24.11 with custom namespace monolithic:
+    echo Make sure to build USD v26.05 with custom namespace monolithic:
     echo   configure-usd-lte-monolithic.bat
     echo   build-usd-lte-monolithic.bat all
     exit /b 1

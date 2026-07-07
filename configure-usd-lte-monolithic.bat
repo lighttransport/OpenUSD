@@ -1,5 +1,5 @@
 @echo off
-REM Configure OpenUSD v24.11 with custom namespace - MONOLITHIC BUILD
+REM Configure OpenUSD v26.05 with custom namespace - MONOLITHIC BUILD
 REM
 REM This script runs CMake configuration only. Run build-usd-lte-monolithic.bat after this.
 REM
@@ -40,7 +40,7 @@ set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 set SOURCE_DIR=%SCRIPT_DIR%
 set BUILD_DIR=%SOURCE_DIR%\build-lte-monolithic
-set INSTALL_DIR=%SOURCE_DIR%\..\dist-usd-lte-monolithic-v24.11
+set INSTALL_DIR=%SOURCE_DIR%\..\dist-usd-lte-monolithic-v26.05
 set TBB_ROOT=%SOURCE_DIR%\..\dist-tbb-reldeb
 
 REM Python configuration
@@ -141,7 +141,7 @@ REM Print header and validate
 REM ============================================================================
 
 echo ========================================
-echo Configuring OpenUSD v24.11 - MONOLITHIC
+echo Configuring OpenUSD v26.05 - MONOLITHIC
 echo ========================================
 echo.
 echo Custom Namespace Configuration:

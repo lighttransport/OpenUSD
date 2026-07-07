@@ -1,6 +1,6 @@
-# Using Dual USD Builds (Standard pxr + Custom pxr_lte v24.11)
+# Using Dual USD Builds (Standard pxr + Custom pxr_lte v26.05)
 
-This document explains how to use both the standard USD build (pxr from pip) and the custom namespace USD build (pxr_lte v24.11) simultaneously in the same Python process.
+This document explains how to use both the standard USD build (pxr from pip) and the custom namespace USD build (pxr_lte v26.05) simultaneously in the same Python process.
 
 ## Build Configurations
 
@@ -10,11 +10,11 @@ This document explains how to use both the standard USD build (pxr from pip) and
 - **Installation**: `pip install usd-core`
 - **Libraries**: `_usd.pyd`, `_sdf.pyd`, etc.
 
-### Custom USD v24.11 (`dist-usd-lte-v24.11`)
+### Custom USD v26.05 (`dist-usd-lte-v26.05`)
 - **Namespace**: `pxr_lte` (custom external namespace)
 - **Internal Namespace**: `pxrInternal_v0_24_11__pxrReserved__`
 - **Library Prefix**: `lte_`
-- **Location**: `~/work/dist-usd-lte-v24.11`
+- **Location**: `~/work/dist-usd-lte-v26.05`
 - **Libraries**: `lte_usd.dll`, `lte_sdf.dll`, etc.
 
 ## Key Configuration
@@ -22,7 +22,7 @@ This document explains how to use both the standard USD build (pxr from pip) and
 The custom build is configured with `pxr_lte` as the external namespace:
 
 ```cpp
-// From dist-usd-lte-v24.11/include/pxr/pxr.h
+// From dist-usd-lte-v26.05/include/pxr/pxr.h
 #define PXR_NS pxr_lte
 #define PXR_INTERNAL_NS pxrInternal_v0_24_11__pxrReserved__
 
@@ -48,7 +48,7 @@ import sys
 import os
 
 # Setup DLL paths for custom build (Windows)
-CUSTOM_USD_ROOT = os.path.expandvars(r"$USERPROFILE\work\dist-usd-lte-v24.11")
+CUSTOM_USD_ROOT = os.path.expandvars(r"$USERPROFILE\work\dist-usd-lte-v26.05")
 TBB_ROOT = os.path.expandvars(r"$USERPROFILE\work\dist-tbb-reldeb")
 
 os.add_dll_directory(os.path.join(CUSTOM_USD_ROOT, "lib"))
@@ -62,7 +62,7 @@ sys.path.insert(0, os.path.join(CUSTOM_USD_ROOT, "lib", "python"))
 from pxr import Usd as StandardUsd
 print(f"Standard USD version: {StandardUsd.GetVersion()}")  # (0, 25, 11)
 
-# Import custom USD v24.11
+# Import custom USD v26.05
 from pxr_lte import Usd as CustomUsd
 print(f"Custom USD version: {CustomUsd.GetVersion()}")  # (0, 24, 11)
 
@@ -83,7 +83,7 @@ import pxr_lte_setup
 
 # Now both are available
 from pxr import Usd as StandardUsd       # pip usd-core
-from pxr_lte import Usd as CustomUsd     # custom v24.11
+from pxr_lte import Usd as CustomUsd     # custom v26.05
 
 # Verify versions
 print(f"pxr: {StandardUsd.GetVersion()}")
@@ -113,10 +113,10 @@ int main() {
 
 ```batch
 cl /EHsc /std:c++17 /MD ^
-    /I "dist-usd-lte-v24.11/include" ^
+    /I "dist-usd-lte-v26.05/include" ^
     /I "dist-tbb-reldeb/include" ^
     test.cpp ^
-    /link /LIBPATH:"dist-usd-lte-v24.11/lib" ^
+    /link /LIBPATH:"dist-usd-lte-v26.05/lib" ^
     lte_tf.lib lte_sdf.lib lte_usd.lib tbb12.lib
 ```
 
@@ -147,7 +147,7 @@ Both builds share TBB. Ensure TBB versions are compatible.
 
 | Script | Description |
 |--------|-------------|
-| `test_pxr_lte_only.py` | Test custom USD v24.11 only |
+| `test_pxr_lte_only.py` | Test custom USD v26.05 only |
 | `test_dual_usd_sameproc.py` | Test both pxr and pxr_lte together |
 | `build_cpp_test.bat` | Build and run C++ test |
 
@@ -156,7 +156,7 @@ Both builds share TBB. Ensure TBB versions are compatible.
 ### "Module not found: pxr_lte"
 
 1. Check DLL paths are added with `os.add_dll_directory()`
-2. Check Python path includes `dist-usd-lte-v24.11/lib/python`
+2. Check Python path includes `dist-usd-lte-v26.05/lib/python`
 3. Verify the build completed successfully
 
 ### DLL load errors
@@ -172,6 +172,6 @@ Objects from `pxr` and `pxr_lte` are incompatible. Convert via strings or re-cre
 ## Version Information
 
 - Standard USD: pip usd-core 25.11 (or similar)
-- Custom USD: v24.11 with pxr_lte namespace
+- Custom USD: v26.05 with pxr_lte namespace
 - TBB: 2021.9.0 (or compatible)
 - Python: 3.11+

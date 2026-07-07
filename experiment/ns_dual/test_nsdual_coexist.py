@@ -25,7 +25,7 @@ import platform
 # ==============================================================================
 
 # Custom namespace USD MONOLITHIC paths (for DLL loading)
-CUSTOM_USD_ROOT = os.path.expandvars(r"$USERPROFILE\work\dist-usd-lte-monolithic-v24.11")
+CUSTOM_USD_ROOT = os.path.expandvars(r"$USERPROFILE\work\dist-usd-lte-monolithic-v26.05")
 CUSTOM_USD_LIB = os.path.join(CUSTOM_USD_ROOT, "lib")
 CUSTOM_USD_BIN = os.path.join(CUSTOM_USD_ROOT, "bin")
 

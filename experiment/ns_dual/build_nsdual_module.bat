@@ -12,7 +12,7 @@ set SCRIPT_DIR=%~dp0
 set SCRIPT_DIR=%SCRIPT_DIR:~0,-1%
 
 REM USD custom namespace MONOLITHIC install directory
-set "DIST_LTE=%USERPROFILE%\work\dist-usd-lte-monolithic-v24.11"
+set "DIST_LTE=%USERPROFILE%\work\dist-usd-lte-monolithic-v26.05"
 set "TBB_DIR=%USERPROFILE%\work\dist-tbb-reldeb"
 
 REM uv Python

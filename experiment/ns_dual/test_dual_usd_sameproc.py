@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Test script for same-process dual USD usage (v24.11).
+Test script for same-process dual USD usage (v26.05).
 
 This script demonstrates importing both standard USD (pxr) and custom
-namespace USD (pxr_lte v24.11) in the same Python process.
+namespace USD (pxr_lte v26.05) in the same Python process.
 
 Requirements:
 - Standard USD: pip install usd-core
-- Custom namespace USD v24.11: built from build-usd-lte.bat
+- Custom namespace USD v26.05: built from build-usd-lte.bat
 
 Usage:
     python test_dual_usd_sameproc.py
@@ -27,8 +27,8 @@ import platform
 # Configuration - Modify these paths for your system
 # ==============================================================================
 
-# Custom namespace USD v24.11 build paths
-CUSTOM_USD_ROOT = os.path.expandvars(r"$USERPROFILE\work\dist-usd-lte-v24.11")
+# Custom namespace USD v26.05 build paths
+CUSTOM_USD_ROOT = os.path.expandvars(r"$USERPROFILE\work\dist-usd-lte-v26.05")
 CUSTOM_USD_LIB = os.path.join(CUSTOM_USD_ROOT, "lib")
 CUSTOM_USD_BIN = os.path.join(CUSTOM_USD_ROOT, "bin")
 
@@ -92,8 +92,8 @@ def test_imports():
         print(f"   NOT AVAILABLE: {e}")
         print("   (Install with: pip install usd-core)")
 
-    # Import custom namespace USD v24.11
-    print("\n2. Importing pxr_lte (custom namespace USD v24.11)...")
+    # Import custom namespace USD v26.05
+    print("\n2. Importing pxr_lte (custom namespace USD v26.05)...")
     try:
         from pxr_lte import Usd as CustomUsd
         from pxr_lte import Sdf as CustomSdf
@@ -131,7 +131,7 @@ def test_stage_creation(StandardUsd, CustomUsd):
         print("\n1. Skipping standard USD stage (not available)")
 
     # Create custom namespace USD stage
-    print("\n2. Creating custom namespace USD v24.11 stage...")
+    print("\n2. Creating custom namespace USD v26.05 stage...")
     try:
         custom_stage = CustomUsd.Stage.CreateInMemory()
         custom_root = custom_stage.DefinePrim("/CustomRoot", "Xform")
@@ -159,7 +159,7 @@ def test_independence(std_stage, custom_stage, StandardUsd, CustomUsd):
     else:
         print("\n1. Standard stage: not available")
 
-    print("\n2. Custom v24.11 stage prims:")
+    print("\n2. Custom v26.05 stage prims:")
     for prim in custom_stage.Traverse():
         print(f"   {prim.GetPath()}")
 
@@ -182,7 +182,7 @@ def test_export(std_stage, custom_stage):
         print("-" * 40)
         print(std_stage.GetRootLayer().ExportToString())
 
-    print("2. Custom USD v24.11 USDA output:")
+    print("2. Custom USD v26.05 USDA output:")
     print("-" * 40)
     print(custom_stage.GetRootLayer().ExportToString())
 
@@ -222,7 +222,7 @@ def main():
     """Main test function."""
 
     print("=" * 60)
-    print("Same-Process Dual USD Test (v24.11)")
+    print("Same-Process Dual USD Test (v26.05)")
     print("=" * 60)
     print()
     print(f"Python: {sys.executable}")
@@ -238,7 +238,7 @@ def main():
 
     if CustomUsd is None:
         print("\nFAILED: Could not import custom USD (pxr_lte)")
-        print("\nMake sure to build USD v24.11 with custom namespace:")
+        print("\nMake sure to build USD v26.05 with custom namespace:")
         print("  configure-usd-lte.bat")
         print("  build-usd-lte.bat all")
         return 1
@@ -257,7 +257,7 @@ def main():
     print("Same-process dual USD is working correctly.")
     if StandardUsd:
         print(f"  pxr (standard): {StandardUsd.GetVersion()}")
-    print(f"  pxr_lte (custom v24.11): {CustomUsd.GetVersion()}")
+    print(f"  pxr_lte (custom v26.05): {CustomUsd.GetVersion()}")
     print("=" * 60)
 
     return 0
