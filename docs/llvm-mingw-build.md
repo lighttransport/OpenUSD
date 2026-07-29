@@ -6,20 +6,48 @@ toolchain (`x86_64-w64-mingw32-clang`/`clang++`) instead of MSVC, as an
 alternative to the Visual Studio 2022 build documented in
 [v26.05_custom_namespace_build.md](v26.05_custom_namespace_build.md).
 
-**This is not yet a working build.** It gets substantially far (most core
-libraries and several Python wrapper modules build and link), but stops on a
-class of bug that is not fully enumerated yet. See
-[Current Status](#current-status) below.
+The minimal monolithic build is working. The committed
+[`build_llvm_mingw.sh`](../build_scripts/build_llvm_mingw.sh) wrapper builds
+oneTBB and OpenUSD without Python or imaging. The Python/non-monolithic
+experiment remains incomplete because of additional clang/MinGW DLL-boundary
+issues; see [Current Status](#current-status) below.
 
 ## Toolchain
 
-- llvm-mingw: `D:\local\llvm-mingw-20260602-ucrt-x86_64` (clang 22.1.7,
-  target `x86_64-w64-windows-gnu`)
+- Scripted Ubuntu toolchain: LLVM-MinGW `20260616` (clang 22.1.8, target
+  `x86_64-w64-windows-gnu`)
 - Generator: Ninja (not Visual Studio)
-- Python: 3.12.12, installed via `uv python install 3.12` (works equally with
-  3.11; not version-specific)
-- TBB: **oneTBB 2021.9.0 built from source with this same toolchain** — see
-  below for why the prebuilt MSVC-built TBB (`dist-tbb-reldeb`) cannot be used
+- Python: disabled by the minimal build script; the Python-enabled configuration
+  below documents the separate Windows experiment
+- TBB: oneTBB 2021.12.0 built from source with this same toolchain — see below
+  for why a prebuilt MSVC-built TBB cannot be used
+
+## Reproducible Minimal Ubuntu Build
+
+From an Ubuntu x86_64 checkout, run:
+
+```bash
+build_scripts/build_llvm_mingw.sh
+```
+
+The script downloads the Ubuntu LLVM-MinGW release, builds oneTBB with the
+same toolchain, and installs a Release monolithic OpenUSD build. Python,
+imaging, USD imaging, tests, examples, tutorials, command-line tools,
+validation, documentation, and Exec are disabled. The default output is
+`build-llvm-mingw/install`.
+
+Useful overrides are supplied through environment variables:
+
+```bash
+JOBS=16 INSTALL_PREFIX=/tmp/usd-mingw build_scripts/build_llvm_mingw.sh
+build_scripts/build_llvm_mingw.sh clean
+```
+
+The wrapper uses
+[`cmake/toolchains/llvm-mingw-x86_64.cmake`](../cmake/toolchains/llvm-mingw-x86_64.cmake),
+which supplies the x86_64 compiler, generic mingw-w64 headers, and
+case-compatible Windows system-library aliases needed when the build runs on
+Ubuntu's case-sensitive filesystem.
 
 ## Why TBB Had to Be Rebuilt
 
@@ -275,12 +303,17 @@ time via a link failure, then fixed and the build re-run):
 
 ## Current Status
 
+**Minimal monolithic native build:** verified on Ubuntu 24.04 with the
+20260616 Ubuntu LLVM-MinGW release and oneTBB 2021.12.0. The result is a
+PE32+ x86-64 `libusd_ms.dll` containing the monolithic core libraries.
+
 **Non-monolithic (regular per-library shared-lib) build**: blocked broadly.
 Every cross-library DLL boundary that touches one of these singleton-style
 accessors hits the bug above, and with dozens of core libraries this is a
 large, open-ended surface.
 
-**Switched to `-DPXR_BUILD_MONOLITHIC=ON`.** This collapses nearly all
+The earlier Python-enabled monolithic experiment used
+`-DPXR_BUILD_MONOLITHIC=ON`. This collapses nearly all
 *core* library-to-library DLL boundaries into a single `lte_usd_ms.dll`, so
 the bug above only remains at the boundary between that one monolithic DLL
 and each separate Python wrapper module (`_tf.pyd`, `_usd.pyd`,
@@ -332,6 +365,7 @@ case-by-case fix using the same non-inline pattern.
 
 ## Build Directories (local, not committed)
 
+- `build-llvm-mingw` — default output from `build_scripts/build_llvm_mingw.sh`
 - `../oneTBB` — oneTBB v2021.9.0 source checkout
 - `build-tbb-mingw` / `../dist-tbb-mingw` — mingw-built TBB
 - `build-lte-mingw` / `../dist-usd-lte-mingw-v26.05` — non-monolithic attempt
